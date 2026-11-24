@@ -1,12 +1,16 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.4
+ Version: 0.9.5
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   'use strict';
+
+  const VERSION = '0.9.5';
+  // Where this copy was loaded from, read while it's still running
+  const SELF = document.currentScript?.src || '';
 
   // Each part checks for its own page and does nothing anywhere else
   const PARTS = [customize, format, status];
@@ -434,10 +438,29 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-  } else {
+  // Loaded from the channel (…@0/dashboard.js), this copy can lag behind the
+  // newest release for hours: jsDelivr is slow to notice one. Then the newest
+  // is loaded by its exact version, which is never stale, and this one steps aside
+  async function start() {
+    if (dashboardBase && SELF.includes(`/${REPO}@${CHANNEL}/`)) {
+      try {
+        const latest = await latestRelease();
+        if (newer(latest, VERSION)) {
+          const script = document.createElement('script');
+          script.src = `${cdn(latest)}dashboard.js`;
+          script.onerror = run;
+          document.head.append(script);
+          return;
+        }
+      } catch {}
+    }
     run();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
   }
 
   /* ---------- Releases: install and update ---------- */
@@ -1122,7 +1145,7 @@ header nav p {
     const card = document.createElement('li');
     card.className = 'theme-row hub-theme-row';
     card.innerHTML = `
-    <img class="theme-thumbnail" src="${cdn(CHANNEL)}preview.png" alt="" width="900" height="600" loading="lazy">
+    <img class="theme-thumbnail" src="${cdn(VERSION)}preview.png" alt="" width="900" height="600" loading="lazy">
     <div class="theme-info">
       <h2>Björn <span class="hub-current" hidden>Current</span></h2>
       <div class="theme-actions">

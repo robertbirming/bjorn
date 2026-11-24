@@ -1,6 +1,6 @@
 /* ===== Theme ===== */
-/* Björn 0.9.4 · github.com/robertbirming/bjorn
-   New: Björn in the Themes list, with a preview on your own blog.
+/* Björn 0.9.5 · github.com/robertbirming/bjorn
+   New: scripts follow each release right away, and a sharper theme preview.
    Updated from the Björn tab under Themes. Changes made here are replaced. */
 
 /* Fonts: Latin */
@@ -53,6 +53,9 @@
 
 :root {
   color-scheme: light dark;
+
+  /* Which Björn this is, so the add-ons script can match it */
+  --bjorn-version: "0.9.5";
 
   /* Type */
   --font: "Schibsted Grotesk", "Schibsted Fallback", system-ui, sans-serif;

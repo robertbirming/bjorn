@@ -1,12 +1,16 @@
 /*
  Plugin name: Björn add-ons
  Description: Copy code, gallery lightbox, latest posts, post nav dates, status, blog archive, reply link, tags at the top and footer credit in one script. The switchable ones are turned on or off in the Björn tab under Themes.
- Version: 0.9.4
+ Version: 0.9.5
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   "use strict";
+
+  const VERSION = "0.9.5";
+  // Where this copy was loaded from, read while it's still running
+  const SELF = document.currentScript?.src || "";
 
   // Never write Bear's double-brace tags in this file, not even in a comment:
   // Bear fills them in wherever they appear in the footer, and breaks the script
@@ -29,10 +33,33 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run, { once: true });
-  } else {
+  // The theme says which Björn it is. Loaded from the channel (…@0/hub.js),
+  // this copy can be older than that for hours, since jsDelivr is slow to
+  // notice a release. Then the theme's own version is loaded instead.
+  // A newer copy than the theme stays: it works with older themes
+  const newer = (a, b) => {
+    const x = a.split(".").map(Number);
+    const y = b.split(".").map(Number);
+    for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+    return false;
+  };
+
+  function start() {
+    const theme = getComputedStyle(document.documentElement).getPropertyValue("--bjorn-version").trim().replace(/^["']|["']$/g, "");
+    if (/\/bjorn@\d+\/hub\.js/.test(SELF) && /^\d+\.\d+\.\d+$/.test(theme) && newer(theme, VERSION)) {
+      const script = document.createElement("script");
+      script.src = SELF.replace(/@\d+\/hub\.js.*$/, `@${theme}/hub.js`);
+      script.onerror = run;
+      document.body.append(script);
+      return;
+    }
     run();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
   }
 
   /* ---------- Copy code: a copy button on every code block ---------- */
