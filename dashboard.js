@@ -1,7 +1,7 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.0
+ Version: 0.9.1
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
@@ -464,7 +464,7 @@
       throw new Error('Unexpected release files');
     }
     // "New: …" in the theme's opening comment, shown beside Update
-    const notes = (theme.slice(0, theme.indexOf('*/')).match(/^\s*New: (.+)$/m) || [])[1] || '';
+    const notes = (theme.slice(0, theme.indexOf('*/', theme.indexOf('/* Björn '))).match(/^\s*New: (.+)$/m) || [])[1] || '';
     return { version, theme, addons, notes };
   }
 
@@ -1080,8 +1080,8 @@ header nav p {
       panel.innerHTML = `
   <section class="hub-install">
     <h2>Install Björn</h2>
-    <p>Björn isn’t on your blog yet. Install puts it in your theme here, ready for you to look over and publish.</p>
-    <p class="hub-hint">The CSS you have now is kept at the end, turned off, so nothing is lost. Until you publish, Revert puts everything back.</p>
+    <p>Björn isn’t on your blog yet. Install adds it here, ready for you to look over before you publish.</p>
+    <p class="hub-hint">Your current CSS is kept under Your CSS, turned off, so nothing is lost. Until you publish, Revert puts everything back.</p>
     <p class="hub-install-actions"><button type="button" data-act="install">Install Björn</button><span class="hub-install-say" aria-live="polite"></span></p>
   </section>`;
       const button = panel.querySelector('[data-act="install"]');
@@ -1093,7 +1093,7 @@ header nav p {
           const rel = await fetchRelease(await latestRelease());
           textarea.value = installCss(textarea.value, rel);
           textarea.dispatchEvent(new Event('input', { bubbles: true }));
-          settingsView(`Björn ${rel.version} is in place. Press <b>Publish</b> to put it on your blog, or Revert to undo.`);
+          settingsView(`Björn ${rel.version} is installed. Press <b>Publish</b> to put it on your blog, or Revert to undo.`);
         } catch (error) {
           console.error('Björn dashboard (install):', error);
           say.textContent = 'Couldn’t get Björn right now. Try again in a moment.';
@@ -1588,7 +1588,7 @@ header nav p {
       textarea.value = updateCss(textarea.value, release);
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
       updateEl.hidden = true;
-      noteText.innerHTML = `Björn ${release.version} is in place. Press <b>Publish</b> to put it on your blog, or Revert to undo.`;
+      noteText.innerHTML = `Updated to Björn ${release.version}. Press <b>Publish</b> to put it on your blog, or Revert to undo.`;
       render();
     });
 
@@ -2358,7 +2358,8 @@ header nav p {
 
   // Whether the Status switch is on, remembered in this browser so the nav
   // link shows without loading the Themes page on every dashboard page
-  const STATUS_KEY = 'hub-status';
+  // One per blog, since blogs on the same account share the dashboard script
+  const STATUS_KEY = `hub-status:${dashboardBase}`;
   function rememberStatus(on) {
     try { localStorage.setItem(STATUS_KEY, JSON.stringify({ on, checked: Date.now() })); } catch {}
   }

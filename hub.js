@@ -1,7 +1,7 @@
 /*
  Plugin name: Björn add-ons
  Description: Copy code, gallery lightbox, latest posts, post nav dates, status, blog archive, reply link, tags at the top and footer credit in one script. The switchable ones are turned on or off in the Björn tab under Themes.
- Version: 0.9.0
+ Version: 0.9.1
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
