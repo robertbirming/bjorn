@@ -1,0 +1,970 @@
+/* ===== Theme ===== */
+/* Björn 0.9.0 · github.com/robertbirming/bjorn
+   Updated from the Björn tab under Themes. Changes made here are replaced. */
+
+/* Fonts: Latin */
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/schibsted-grotesk@5.3.0/files/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/schibsted-grotesk@5.3.0/files/schibsted-grotesk-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Fonts: Latin extended, only loaded when a page needs it */
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/schibsted-grotesk@5.3.0/files/schibsted-grotesk-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/schibsted-grotesk@5.3.0/files/schibsted-grotesk-latin-ext-wght-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Fonts: Arial sized to match Schibsted, so text doesn't jump when it loads */
+@font-face {
+  font-family: "Schibsted Fallback";
+  src: local("Arial");
+  size-adjust: 104.66%;
+  ascent-override: 93.3%;
+  descent-override: 24.63%;
+  line-gap-override: 0%;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Type */
+  --font: "Schibsted Grotesk", "Schibsted Fallback", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+  --scale: 1;
+  --size: calc(clamp(1rem, 0.9rem + 0.5vw, 1.125rem) * var(--scale));
+  --small: 0.875em;
+  --leading: 1.6;
+  --weight: 400;
+  --weight-medium: 600;
+  --weight-bold: 700;
+
+  /* Space: one step is a line of body text */
+  --space: calc(var(--size) * var(--leading));
+  --space-m: calc(var(--space) * 1.5);
+  --space-l: calc(var(--space) * 2);
+  --gap: 0.5em;
+  --inset: 1.25em;
+
+  /* Shape */
+  --radius: 4px;
+  --radius-l: 6px;
+  --transition: 150ms ease;
+
+  /* Palette: the only three colors to set */
+  --bg: #f7f7f4;
+  --text: #1c2230;
+  --link: #174ea3;
+
+  /* Derived from the palette */
+  --surface: color-mix(in srgb, var(--text) 5%, var(--bg));
+  --border: color-mix(in srgb, var(--text) 16%, var(--bg));
+  --muted: color-mix(in srgb, var(--text) 70%, var(--bg));
+  --visited: var(--link);
+  --line: 1px solid var(--border);
+}
+
+/* Visited: the link color turned toward purple */
+@supports (color: oklch(from red l c h)) {
+  :root {
+    --visited: oklch(from var(--link) l c calc(h + 45));
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141a22;
+    --text: #e4e7ec;
+    --link: #7db7f7;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+body {
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: var(--space) 1.25rem var(--space-m);
+  font: var(--weight) var(--size)/var(--leading) var(--font);
+  hanging-punctuation: first last;
+  overflow-wrap: break-word;
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* Base */
+[hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+}
+
+:where(button:not(:disabled)) {
+  cursor: pointer;
+}
+
+:where(:focus-visible) {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+/* Covers add-ons too. 0.01ms so transition events still fire */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Flow */
+:where(p, ul, ol, blockquote, figure, pre, .highlight, .code, table, details) {
+  margin-block: var(--space);
+}
+
+/* Bear leaves empty paragraphs around HTML blocks */
+p:empty {
+  display: none;
+}
+
+hr {
+  margin-block: var(--space-m);
+  border: 0;
+  border-block-start: var(--line);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  margin-block: 1.25lh 0.6lh;
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+:is(h1, h2, h3, h4, h5, h6) + * {
+  margin-block-start: 0;
+}
+
+h1 {
+  font-size: 1.8em;
+  letter-spacing: -0.015em;
+}
+
+h2 { font-size: 1.35em; }
+h3 { font-size: 1.125em; }
+h4, h5, h6 { font-size: 1em; }
+
+/* Linked heading: a soft highlight where you land */
+:is(h1, h2, h3, h4, h5, h6):target {
+  scroll-margin-block-start: var(--space);
+  background-color: color-mix(in srgb, var(--link) 12%, transparent);
+  box-shadow: 0 0 0 0.25em color-mix(in srgb, var(--link) 12%, transparent);
+  border-radius: var(--radius);
+}
+
+/* Links */
+a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+@media (hover: hover) {
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+:where(main) a:visited {
+  color: var(--visited);
+}
+
+/* Inline text */
+/* Keeps footnote numbers from stretching their line */
+sup, sub {
+  line-height: 0;
+}
+
+/* Lists */
+:where(ul) {
+  padding-inline-start: 1.5em;
+}
+
+:where(ol) {
+  padding-inline-start: 2.5em;
+}
+
+/* Zero specificity, so these rely on coming after Flow */
+:where(li) + :where(li) {
+  margin-block-start: 0.25lh;
+}
+
+:where(li) > :where(ul, ol, p) {
+  margin-block: 0.25lh;
+}
+
+:where(li)::marker {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Boxes: blockquote, code block and details share one look */
+:where(blockquote, pre, details) {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+}
+
+/* Blockquotes */
+blockquote {
+  position: relative;
+  margin-inline: 0;
+  padding: 1em var(--inset);
+  padding-inline-end: 3.5em;
+}
+
+blockquote::before {
+  content: "\201C" / "";
+  position: absolute;
+  inset-block-start: 0.1em;
+  inset-inline-end: 0.3em;
+  font-size: 3em;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  color: color-mix(in srgb, var(--link) 60%, var(--surface));
+  hanging-punctuation: none; /* Safari would hang the mark into the text */
+}
+
+blockquote > :first-child { margin-block-start: 0; }
+blockquote > :last-child { margin-block-end: 0; }
+
+/* Attribution: a last paragraph with just **Name**
+   (a closing line with one bold word also matches) */
+blockquote > p:has(+ p:last-child > strong:only-child) {
+  margin-block-end: 0.5em;
+}
+
+blockquote > p:not(:first-child):last-child:has(> strong:only-child) {
+  margin-block-start: 0.5em;
+  font-size: var(--small);
+  color: var(--muted);
+
+  &::before {
+    content: "— " / "";
+  }
+
+  > strong {
+    font-weight: var(--weight);
+    color: var(--text);
+  }
+}
+
+/* Callout: a blockquote that opens with a lone bold line,
+   like **Note**, then a blank line */
+blockquote:has(> p:first-child:not(:last-child) > strong:only-child) {
+  padding-inline-end: var(--inset);
+  background-color: color-mix(in srgb, var(--link) 8%, var(--bg));
+
+  &::before {
+    content: none;
+  }
+
+  > p:first-child {
+    margin-block-end: 0.25em;
+    color: var(--link);
+  }
+
+  > p:first-child + * {
+    margin-block-start: 0;
+  }
+}
+
+/* Media */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border-radius: var(--radius);
+}
+
+/* Dimmed in dark mode, gallery hover builds on --dim */
+@media (prefers-color-scheme: dark) {
+  img {
+    --dim: 0.9;
+    filter: brightness(var(--dim));
+  }
+}
+
+:where(iframe, video, audio) {
+  display: block;
+  max-width: 100%;
+  margin-block: var(--space-l);
+}
+
+figure {
+  margin-inline: 0;
+}
+
+/* Bear adds line breaks between images on separate lines */
+p:has(> img, > a > img) > br {
+  display: none;
+}
+
+/* Caption: an italic line right after an image */
+:is(figcaption, p:has(> img, > a > img) > em) {
+  display: block;
+  margin-block-start: 0.5em;
+  font-size: var(--small);
+  color: var(--muted);
+}
+
+/* Image row: two or more small images in one paragraph */
+p:has(> img ~ img, > a ~ a > img) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--gap);
+
+  > a { display: contents; }
+  > img, > a > img { margin: 0; }
+  > em { flex-basis: 100%; }
+}
+
+/* Markers, added to the image URL: #screenshot, #badge */
+img[src$="#screenshot"] {
+  border: var(--line);
+}
+
+img[src$="#badge"] {
+  border-radius: 0;
+}
+
+img[src$="#screenshot"],
+img[src$="#badge"] {
+  filter: none;
+}
+
+/* Gallery: photos marked #gallery, wins over the image row by specificity */
+p:has(> img[src$="#gallery"], > a > img[src$="#gallery"]) {
+  --gallery-min: 9rem;
+  --gallery-ratio: 4 / 3;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--gallery-min), 100%), 1fr));
+  gap: var(--gap);
+
+  > a {
+    display: block;
+    border-radius: var(--radius);
+  }
+
+  > img,
+  > a > img {
+    width: 100%;
+    margin: 0;
+    aspect-ratio: var(--gallery-ratio);
+    object-fit: cover;
+    transition: filter var(--transition);
+  }
+
+  > em {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Two or three photos fill the row. auto-fit can't do this,
+   the full-width caption keeps every column in use */
+p:has(> img[src$="#gallery"]:nth-of-type(2):last-of-type,
+      > a:nth-of-type(2):last-of-type > img[src$="#gallery"]) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+p:has(> img[src$="#gallery"]:nth-of-type(3):last-of-type,
+      > a:nth-of-type(3):last-of-type > img[src$="#gallery"]) {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (hover: hover) {
+  p:has(> a > img[src$="#gallery"]) > a:hover > img {
+    filter: brightness(calc(var(--dim, 1) * 1.08));
+  }
+}
+
+/* Code */
+:where(code, pre, kbd, samp) {
+  font-family: var(--mono);
+  font-size: var(--small);
+}
+
+code {
+  padding: 0.1em 0.3em;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+}
+
+/* Already small, don't shrink twice */
+:is(pre, table, .footnotes) code {
+  font-size: 1em;
+}
+
+pre {
+  padding: 1em var(--inset);
+  line-height: 1.4;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+
+/* Bear's code wrappers, the pre does the styling */
+.highlight,
+.code {
+  padding: 0;
+  background: none;
+}
+
+:where(.highlight, .code) pre {
+  margin: 0;
+}
+
+/* Syntax colors: Bear's highlighter, recolored from the link color
+   at the same lightness, and without its bold */
+.highlight {
+  --code-keyword: var(--link);
+  --code-name: var(--visited);
+  --code-string: var(--text);
+  --code-number: var(--text);
+}
+
+@supports (color: oklch(from red l c h)) {
+  .highlight {
+    --code-string: oklch(from var(--link) l c calc(h - 120));
+    --code-number: oklch(from var(--link) l c calc(h + 150));
+  }
+}
+
+.highlight [class] {
+  font-weight: inherit;
+}
+
+.highlight :is(.c, .ch, .cm, .c1, .cs, .cpf) {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.highlight :is(.k, .kd, .kn, .kp, .kr, .kc, .kt, .ow, .cp, .sa, .nb, .bp, .gh, .gu) {
+  color: var(--code-keyword);
+}
+
+.highlight :is(.nf, .fm, .nc, .nn, .nt, .nd, .nl, .na, .ne) {
+  color: var(--code-name);
+}
+
+.highlight :is(.s, .s1, .s2, .sb, .sc, .sd, .dl, .sh, .sx, .sr, .se, .si, .ss, .gi) {
+  color: var(--code-string);
+}
+
+.highlight :is(.m, .mb, .mf, .mh, .mi, .mo, .il, .no, .ni, .gd) {
+  color: var(--code-number);
+}
+
+.highlight :is(.o, .p, .n, .nv, .vc, .vg, .vi, .vm, .w) {
+  color: inherit;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--small);
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.5em 0.75em;
+  text-align: start;
+  vertical-align: top;
+  border-block-end: var(--line);
+}
+
+th {
+  font-weight: var(--weight-bold);
+  border-block-end-color: var(--muted);
+}
+
+/* Small screens: the table scrolls itself, Bear can't wrap it */
+@media (max-width: 40rem) {
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Details */
+summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.75em var(--inset);
+  font-weight: var(--weight-medium);
+  list-style: none;
+  cursor: pointer;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0.45em;
+  height: 0.45em;
+  border-inline-end: 2px solid var(--muted);
+  border-block-end: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform var(--transition);
+}
+
+details[open] > summary {
+  border-block-end: var(--line);
+}
+
+details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+details > :not(summary) {
+  margin-inline: var(--inset);
+}
+
+details > summary + * {
+  margin-block-start: 1em;
+}
+
+details > :last-child {
+  margin-block-end: 1em;
+}
+
+summary:focus-visible {
+  border-radius: var(--radius);
+}
+
+@media (hover: hover) {
+  summary:hover::before {
+    border-color: var(--text);
+  }
+}
+
+/* Footnotes */
+/* Bigger tap area, the negative margin keeps the spacing */
+.footnote-ref a {
+  padding: 0.3em 0.35em;
+  margin-inline: -0.25em;
+  text-decoration: none;
+}
+
+.footnotes {
+  margin-block: var(--space);
+  font-size: var(--small);
+  color: var(--muted);
+}
+
+.footnotes ol {
+  margin: 0;
+}
+
+.footnotes li p {
+  margin: 0;
+}
+
+/* Back link: Bear's ↩ hidden and redrawn as text, iOS shows it as an emoji.
+   Sized from --size, since the link's own size is 0 */
+.footnotes a.footnote {
+  font-size: 0;
+  text-decoration: none;
+}
+
+.footnotes a.footnote::after {
+  content: "\21A9\FE0E" / "";
+  margin-inline-start: 0.05em;
+  padding: 0.25em;
+  font-size: calc(var(--size) * 0.875);
+}
+
+.footnote-ref a:visited,
+.footnotes a.footnote:visited {
+  color: var(--link);
+}
+
+:is(.footnote-ref, .footnotes li):target {
+  scroll-margin-block-start: 2em;
+}
+
+.footnotes li:target {
+  color: var(--text);
+}
+
+/* Header */
+header {
+  margin-block-end: var(--space-m);
+}
+
+a.title {
+  display: block;
+  width: fit-content;
+  color: inherit;
+  text-decoration: none;
+}
+
+.title h1 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+header nav p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em 0.9em;
+  margin-block: 0.3em 0;
+}
+
+/* Main */
+/* Also when Bear starts a page with an empty paragraph */
+main > :first-child,
+main > p:empty:first-child + * {
+  margin-block-start: 0;
+}
+
+/* Posts */
+/* Title and date sit together, only when there is a date */
+.post main > h1:has(+ p > i > time) {
+  margin-block-end: 0;
+}
+
+.post main > h1 + p:has(> i > time) {
+  margin-block-start: 0.5em;
+}
+
+/* Dates in mono, a nod to Bear's default theme */
+time {
+  font-family: var(--mono);
+  font-size: var(--small);
+  color: var(--muted);
+}
+
+/* Bear wraps dates in <i> */
+i:has(> time) {
+  font-style: normal;
+}
+
+/* Post list */
+/* fit-content stops long date formats from squeezing the titles */
+.blog-posts {
+  display: grid;
+  grid-template-columns: fit-content(40%) 1fr;
+  column-gap: 1em;
+  row-gap: 0.3lh;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-posts li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  margin: 0;
+}
+
+.blog-posts li a {
+  justify-self: start;
+}
+
+/* Footer: centered. The directive on its own full row,
+   then the credits as one small line */
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.4em;
+  margin-block-start: var(--space-m);
+  padding-block-start: var(--space);
+  border-block-start: var(--line);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Bear puts the directive in a span, people fill it with blocks */
+#footer-directive {
+  display: block;
+  flex-basis: 100%;
+}
+
+/* Post nav and Latest posts keep their own left and right layout */
+footer :is(.post-nav, .latest-posts) {
+  text-align: start;
+}
+
+footer p {
+  margin-block: 0 0.5lh;
+}
+
+/* Credits: Björn's and Bear's lines, outside the directive */
+footer > :not(#footer-directive) {
+  font-size: var(--small);
+}
+
+.hub-credit::after {
+  content: "·" / "";
+  margin-inline-start: 0.4em;
+}
+
+.bear {
+  white-space: nowrap;
+}
+
+/* Tags */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-block: var(--space-m) var(--space);
+  font-size: var(--small);
+}
+
+.tags :is(a, a:visited) {
+  margin: 0;
+  padding: 0.2em 0.75em;
+  line-height: 1.5;
+  color: var(--muted);
+  text-decoration: none;
+  border: var(--line);
+  border-radius: var(--radius-l);
+  transition: color var(--transition), border-color var(--transition);
+}
+
+@media (hover: hover) {
+  .tags a:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+}
+
+/* Tag filter: Bear's "Filtering for" heading on tag pages */
+h3 > .tag a {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  aspect-ratio: 1;
+  margin-inline-start: 0.15em;
+  font-size: 0.8em;
+  font-weight: var(--weight);
+  line-height: 1;
+  vertical-align: 0.15em;
+  color: var(--muted);
+  background-color: var(--surface);
+  border: var(--line);
+  border-radius: 50%;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+@media (hover: hover) {
+  h3 > .tag a:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+}
+
+/* One tag: the ✕ already removes it */
+h3:has(> .tag:only-of-type) + small {
+  display: none;
+}
+
+/* Email signup */
+.email-signup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  max-width: 32rem;
+  margin-block: var(--space);
+}
+
+/* Bear puts a line break between the field and the button */
+.email-signup br {
+  display: none;
+}
+
+.email-signup :is(input[type="email"], input[type="submit"]) {
+  line-height: 1.4;
+  border-radius: var(--radius);
+}
+
+/* !important beats Bear's inline padding */
+.email-signup input[type="email"] {
+  flex: 1 1 14em;
+  min-width: 0;
+  padding: 0.5em 0.75em !important;
+  color: var(--text);
+  background-color: var(--bg);
+  border: var(--line);
+}
+
+.email-signup input[type="email"]::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.email-signup input[type="submit"] {
+  padding: 0.5em 1em;
+  font-weight: var(--weight-medium);
+  color: var(--bg);
+  background-color: var(--link);
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+@media (hover: hover) {
+  .email-signup input[type="submit"]:hover {
+    background-color: color-mix(in srgb, var(--link) 85%, var(--text));
+  }
+}
+
+/* The thank-you message Bear swaps in after subscribing */
+.email-signup > i {
+  color: var(--muted);
+}
+
+/* Print: ink on paper, only what's worth reading. Keep this last in the theme */
+@media print {
+  /* Doubled to beat the Settings zone, which comes later */
+  :root:root {
+    --size: 11pt;
+    --bg: #fff;
+    --text: #000;
+    --link: #000;
+    --visited: #000;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+
+  body {
+    max-width: none;
+    padding: 0;
+  }
+
+  /* The avatar is a background, which printers skip, so drop its column too.
+     body > to beat the Settings zone, which comes later */
+  body > header {
+    display: block;
+  }
+
+  body > header::before {
+    content: none;
+  }
+
+  /* Only useful on screen */
+  header nav,
+  footer,
+  #upvote-form,
+  .tags,
+  .copy-code,
+  .email-signup,
+  .lightbox,
+  #blog-archive > p:first-child,
+  #blog-archive-pagination,
+  .footnotes a.footnote,
+  #guestbooks___guestbook-form,
+  #guestbooks___guestbook-made-with {
+    display: none !important;
+  }
+
+  /* Printers skip backgrounds, a thin line keeps the boxes */
+  :where(blockquote, pre, details) {
+    border: var(--line);
+  }
+
+  img {
+    filter: none;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    overflow: visible;
+  }
+
+  /* Keep things whole across pages */
+  :where(img, figure, pre, blockquote, table, details) {
+    break-inside: avoid;
+  }
+
+  :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Show where links go, so paper still says it */
+  main a[href^="http"]:not(:has(img))::after {
+    content: " (" attr(href) ")";
+    font-size: var(--small);
+    overflow-wrap: anywhere;
+  }
+}
