@@ -1,7 +1,7 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.1
+ Version: 0.9.2
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
@@ -438,16 +438,26 @@
   }
 
   /* ---------- Releases: install and update ---------- */
-  // The newest release on the channel, checked once per visit
+  // The newest release on the channel. GitHub knows the moment a release is
+  // published, jsDelivr's lookup can lag behind, so it's only the fallback.
+  // Checked at most every ten minutes
   async function latestRelease() {
     try {
       const saved = JSON.parse(sessionStorage.getItem('hub-latest') || 'null');
-      if (saved && Date.now() - saved.at < 3600e3) return saved.version;
+      if (saved && Date.now() - saved.at < 600e3) return saved.version;
     } catch {}
-    const res = await fetch(`https://data.jsdelivr.com/v1/packages/gh/${REPO}/resolved?specifier=${CHANNEL}`);
-    if (!res.ok) throw new Error(`Release check: ${res.status}`);
-    const { version } = await res.json();
-    if (!/^\d+\.\d+\.\d+$/.test(version || '')) throw new Error('No release yet');
+    const valid = (v) => /^\d+\.\d+\.\d+$/.test(v || '') && v.split('.')[0] === CHANNEL;
+    let version = null;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } });
+      if (res.ok) version = String((await res.json()).tag_name || '').replace(/^v/, '');
+    } catch {}
+    if (!valid(version)) {
+      const res = await fetch(`https://data.jsdelivr.com/v1/packages/gh/${REPO}/resolved?specifier=${CHANNEL}`);
+      if (!res.ok) throw new Error(`Release check: ${res.status}`);
+      version = (await res.json()).version;
+    }
+    if (!valid(version)) throw new Error('No release yet');
     try { sessionStorage.setItem('hub-latest', JSON.stringify({ version, at: Date.now() })); } catch {}
     return version;
   }
