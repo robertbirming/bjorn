@@ -1,14 +1,14 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.5
+ Version: 0.9.6
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   'use strict';
 
-  const VERSION = '0.9.5';
+  const VERSION = '0.9.6';
   // Where this copy was loaded from, read while it's still running
   const SELF = document.currentScript?.src || '';
 
@@ -561,6 +561,41 @@
     }
   }
 
+  /* ---------- Footer directive: the lines the extras need ---------- */
+  // Always the same three: the switches in the Björn tab decide what shows
+  const FOOTER_LINES = [POST_NAV, LATEST, `<script src="${HUB_SCRIPT}"></` + 'script>'];
+  const FOOTER_FOUND = [/class="post-nav"/, /class="latest-posts"/, /bjorn@[^"']*\/hub\.js/];
+  const missingLines = (text) => FOOTER_LINES.filter((line, i) => !FOOTER_FOUND[i].test(text));
+
+  // Post nav and latest posts first, the script last, around what's already there
+  function withFooterLines(text) {
+    const missing = missingLines(text);
+    const top = missing.filter((line) => line !== FOOTER_LINES[2]);
+    const script = missing.includes(FOOTER_LINES[2]) ? [FOOTER_LINES[2]] : [];
+    return [...top, text.trim(), ...script].filter(Boolean).join('\n');
+  }
+
+  // Bear's directives page: the footer field, and the whole form to send it back
+  async function loadDirectives() {
+    const res = await fetch(DIRECTIVES_URL, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(`Directives page: ${res.status}`);
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const footer = doc.querySelector('textarea[name*="footer"]');
+    const form = footer?.closest('form');
+    if (!form) throw new Error('No footer directive field');
+    const body = () => {
+      const data = new URLSearchParams();
+      for (const el of form.elements) {
+        if (!el.name || el.disabled || ['submit', 'button', 'file', 'reset'].includes(el.type)) continue;
+        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) continue;
+        if (el.tagName === 'SELECT' && el.multiple) { for (const o of el.selectedOptions) data.append(el.name, o.value); continue; }
+        data.append(el.name, el.value);
+      }
+      return data;
+    };
+    return { footer, body, action: form.getAttribute('action') ? new URL(form.getAttribute('action'), DIRECTIVES_URL).href : DIRECTIVES_URL };
+  }
+
   /* ---------- The Settings zone: shared by the Björn tab and Status ---------- */
   // The zone from its marker up to the next zone, or the end
   function zone(css, mark) {
@@ -1090,7 +1125,10 @@ header nav p {
   .hub-emoji-field[hidden]{display:none}
   #hub-panel .hub-emoji-field input{max-width:8rem;font-size:18px}
   #hub-panel .hub-footer{margin-top:.75rem;font-size:.9em}
-  .hub-footer-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.5rem}
+  .hub-footer-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1rem}
+  .hub-footer-acts{display:flex;align-items:center;gap:1rem}
+  .hub-footer-lines{display:grid;gap:.5rem;justify-items:start;margin-top:.75rem}
+  #hub-panel .hub-footer[hidden],.hub-footer-lines[hidden]{display:none}
   #hub-panel .hub-footer button{margin:0}
   .hub-footer pre{margin:0;padding:10px 12px;background:var(--code-background-color);color:var(--code-color);border-radius:3px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
   #hub-panel .hub-meta .hub-addon{padding-top:0;border-top:0}
@@ -1297,11 +1335,12 @@ header nav p {
     <h2>Blog extras</h2>
     <p class="hub-intro">Small touches around the blog.</p>
     <div class="hub-addons">${group('blog')}</div>
-    <div class="message offer hub-footer">
-      <div class="hub-footer-head"><span></span><button type="button" data-act="copy-footer">Copy</button></div>
-      <pre></pre>
+    <div class="message offer hub-footer" hidden>
+      <div class="hub-footer-head"><span class="hub-footer-say">The extras need a few lines in your ${newTab(DIRECTIVES_URL, 'footer directive')}.</span><span class="hub-footer-acts"><button type="button" data-act="add-footer">Add to footer</button><button type="button" class="link-button" data-act="show-footer" aria-expanded="false">Show the lines</button></span></div>
+      <div class="hub-footer-lines" hidden><pre></pre><button type="button" data-act="copy-footer">Copy</button></div>
     </div>
   </section>
+  <hr class="hub-divider">
   <section class="hub-meta">
     <h2>Meta image</h2>
     <div class="hub-addon">
@@ -1370,7 +1409,10 @@ header nav p {
     const replyField = $('#hub-reply');
     const footerEl = $('.hub-footer');
     const footerCode = footerEl.querySelector('pre');
-    const footerText = footerEl.querySelector('.hub-footer-head span');
+    const footerSay = footerEl.querySelector('.hub-footer-say');
+    const addFooterBtn = $('[data-act="add-footer"]');
+    const showFooterBtn = $('[data-act="show-footer"]');
+    const footerLines = footerEl.querySelector('.hub-footer-lines');
     const copyBtn = $('[data-act="copy-footer"]');
     const ownEl = $('.hub-own');
     const ownInput = ownEl.querySelector('textarea');
@@ -1460,14 +1502,7 @@ header nav p {
         : `To hide the number, use “Hide upvotes” in Bear’s ${newTab(ADVANCED_URL, 'advanced settings')}.`;
       replyField.closest('.hub-field').hidden = !state.addons.reply;
 
-      // The page can't see the footer, so the note stays as a reminder
-      const lines = [`<script src="${HUB_SCRIPT}"></` + 'script>'];
-      if (state.addons.latest) lines.unshift(LATEST);
-      if (state.addons.post) lines.unshift(POST_NAV);
-      const where = newTab(DIRECTIVES_URL, 'footer directive');
-      const count = ['this line', 'these two lines', 'these three lines'][lines.length - 1];
-      footerText.innerHTML = `Make sure your ${where} has ${count}:`;
-      footerCode.textContent = lines.join('\n');
+      footerCode.textContent = FOOTER_LINES.join('\n');
 
       syncNote();
     }
@@ -1653,6 +1688,49 @@ header nav p {
       setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
     });
 
+    /* ---------- Footer: the three lines the extras need ---------- */
+    // Checked against Bear's footer directive once Björn is published.
+    // Nothing shows when they're there
+    showFooterBtn.addEventListener('click', () => {
+      footerLines.hidden = !footerLines.hidden;
+      showFooterBtn.setAttribute('aria-expanded', String(!footerLines.hidden));
+      showFooterBtn.textContent = footerLines.hidden ? 'Show the lines' : 'Hide the lines';
+    });
+
+    async function checkFooter() {
+      if (!original.includes(THEME_MARK) || !DIRECTIVES_URL) return;
+      try {
+        const page = await loadDirectives();
+        footerEl.hidden = missingLines(page.footer.value).length === 0;
+      } catch (error) {
+        // Couldn't read it: show the lines to add by hand, without the button
+        console.info('Björn dashboard (footer check):', error.message);
+        addFooterBtn.hidden = true;
+        footerEl.hidden = false;
+      }
+    }
+
+    addFooterBtn.addEventListener('click', async () => {
+      addFooterBtn.disabled = true;
+      footerSay.textContent = 'Adding…';
+      try {
+        const page = await loadDirectives();
+        page.footer.value = withFooterLines(page.footer.value);
+        const res = await fetch(page.action, { method: 'POST', body: page.body(), credentials: 'same-origin' });
+        if (!res.ok) throw new Error(`Save: ${res.status}`);
+        const check = await loadDirectives();
+        if (missingLines(check.footer.value).length) throw new Error('Not saved');
+        footerSay.textContent = 'Added ✓';
+        footerEl.querySelector('.hub-footer-acts').hidden = true;
+        footerLines.hidden = true;
+        setTimeout(() => { footerEl.hidden = true; }, 2000);
+      } catch (error) {
+        console.error('Björn dashboard (footer):', error);
+        footerSay.textContent = 'Couldn’t add them. Show the lines to add them yourself.';
+        addFooterBtn.disabled = false;
+      }
+    });
+
     revertBtn.addEventListener('click', () => {
       textarea.value = original;
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1694,6 +1772,7 @@ header nav p {
     fillFields();
     render();
     if (!installed) checkUpdate();
+    checkFooter();
     }
   }
 
