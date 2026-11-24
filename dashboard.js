@@ -1,7 +1,7 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.3
+ Version: 0.9.4
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
@@ -508,6 +508,36 @@
     return css;
   }
 
+  // Bear's own preview of the blog, in a new tab, with Björn's CSS swapped in.
+  // The tab is opened first, so browsers don't block it, then filled in
+  async function previewBjorn() {
+    const fallback = 'https://robertbirming.com/';
+    const win = window.open(`${dashboardBase}styles/?stylesheet=bear-default&preview=true`, '_blank');
+    if (!win) { window.open(fallback, '_blank'); return; }
+    try {
+      const css = installCss('', await fetchRelease(await latestRelease()));
+      const started = Date.now();
+      const fill = () => {
+        let doc;
+        try { doc = win.document; } catch { return; }
+        const style = doc?.readyState !== 'loading' && win.location.search.includes('preview') && doc.querySelector('style[data-name="default"]');
+        if (!style) {
+          if (Date.now() - started < 15000 && !win.closed) setTimeout(fill, 150);
+          return;
+        }
+        style.textContent = css;
+        // The add-ons too, for the archive, copy code and the rest
+        const script = doc.createElement('script');
+        script.src = HUB_SCRIPT;
+        doc.body.append(script);
+      };
+      fill();
+    } catch (error) {
+      console.error('Björn dashboard (preview):', error);
+      if (!win.closed) win.location = fallback;
+    }
+  }
+
   /* ---------- The Settings zone: shared by the Björn tab and Status ---------- */
   // The zone from its marker up to the next zone, or the end
   function zone(css, mark) {
@@ -947,6 +977,8 @@ header nav p {
   .hub-install-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem}
   .hub-install-actions button{margin:0}
   .hub-install-say{font-size:small;color:var(--muted)}
+  .hub-current{margin-left:.4em;padding:1px 6px;font-size:small;font-weight:normal;color:var(--muted);border:1px solid var(--border);border-radius:3px;vertical-align:middle}
+  .hub-current[hidden],.hub-theme-row [hidden]{display:none}
   #hub-panel .hub-note{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 1rem}
   #hub-panel section{padding:1.5rem 0 .5rem}
   #hub-panel .hub-divider{margin:1.5rem 0 0;border:0;border-top:1px solid var(--border)}
@@ -1085,6 +1117,35 @@ header nav p {
     let original = textarea.value;
     const NOTE = 'You have unpublished changes. Press <b>Publish</b> to put them on your blog.';
 
+    /* ---------- A Björn card first in Bear's theme list ---------- */
+    const list = document.querySelector('#themes-tab .theme-list');
+    const card = document.createElement('li');
+    card.className = 'theme-row hub-theme-row';
+    card.innerHTML = `
+    <img class="theme-thumbnail" src="${cdn(CHANNEL)}preview.png" alt="" width="900" height="600" loading="lazy">
+    <div class="theme-info">
+      <h2>Björn <span class="hub-current" hidden>Current</span></h2>
+      <div class="theme-actions">
+        <a href="#" data-act="preview" aria-label="Preview Björn on your blog (opens in a new tab)">Preview <span aria-hidden="true">↗</span></a>
+        <button type="button" data-act="open"></button>
+      </div>
+    </div>`;
+    list?.prepend(card);
+    card.querySelector('[data-act="preview"]').addEventListener('click', (e) => { e.preventDefault(); previewBjorn(); });
+    card.querySelector('[data-act="open"]').addEventListener('click', () => {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      tabs.scrollIntoView({ block: 'start' });
+    });
+    // Installed means published: what's on the blog now
+    function syncCard() {
+      const on = original.includes(THEME_MARK);
+      card.querySelector('.hub-current').hidden = !on;
+      card.querySelector('[data-act="preview"]').hidden = on;
+      card.querySelector('[data-act="open"]').textContent = on ? 'Settings' : 'Install';
+    }
+    syncCard();
+
     if (original.includes(THEME_MARK)) settingsView();
     else installView();
 
@@ -1095,10 +1156,11 @@ header nav p {
     <h2>Install Björn</h2>
     <p>Björn isn’t on your blog yet. Install adds it here, ready for you to look over before you publish.</p>
     <p class="hub-hint">Your current CSS is kept under Your CSS, turned off, so nothing is lost. Until you publish, Revert puts everything back.</p>
-    <p class="hub-install-actions"><button type="button" data-act="install">Install Björn</button><span class="hub-install-say" aria-live="polite"></span></p>
+    <p class="hub-install-actions"><button type="button" data-act="install">Install Björn</button><a href="#" data-act="preview">Preview on your blog <span aria-hidden="true">↗</span></a><span class="hub-install-say" aria-live="polite"></span></p>
   </section>`;
       const button = panel.querySelector('[data-act="install"]');
       const say = panel.querySelector('.hub-install-say');
+      panel.querySelector('[data-act="preview"]').addEventListener('click', (e) => { e.preventDefault(); previewBjorn(); });
       button.addEventListener('click', async () => {
         button.disabled = true;
         say.textContent = 'Getting Björn…';
