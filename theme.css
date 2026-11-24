@@ -1,6 +1,6 @@
 /* ===== Theme ===== */
-/* Björn 0.9.7 · github.com/robertbirming/bjorn
-   New: one line for both footer and dashboard, always the right version.
+/* Björn 0.9.8 · github.com/robertbirming/bjorn
+   New: everything is called Björn now, inside and out.
    Updated from the Björn tab under Themes. Changes made here are replaced. */
 
 /* Fonts: Latin */
@@ -55,7 +55,7 @@
   color-scheme: light dark;
 
   /* Which Björn this is, so the add-ons script can match it */
-  --bjorn-version: "0.9.7";
+  --bjorn-version: "0.9.8";
 
   /* Type */
   --font: "Schibsted Grotesk", "Schibsted Fallback", system-ui, sans-serif;
@@ -770,7 +770,7 @@ footer > :not(#footer-directive) {
   font-size: var(--small);
 }
 
-.hub-credit::after {
+.bjorn-credit::after {
   content: "·" / "";
   margin-inline-start: 0.4em;
 }

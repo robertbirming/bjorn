@@ -409,7 +409,7 @@ html:has(.lightbox[open]) {
 
 /* Status (posted from Status in the dashboard, shown by the add-ons script)
    A centered card under the footer directive, above the credits */
-.hub-status {
+.bjorn-status {
   display: flex;
   flex-basis: 100%;
   justify-content: center;
@@ -417,7 +417,7 @@ html:has(.lightbox[open]) {
 }
 
 /* Sized from --size, so the footer's small credits don't shrink it */
-.hub-status-card {
+.bjorn-status-card {
   display: flex;
   align-items: center;
   gap: 0.75em;
@@ -431,26 +431,26 @@ html:has(.lightbox[open]) {
   border-radius: var(--radius-l);
 }
 
-.hub-status-emoji {
+.bjorn-status-emoji {
   flex-shrink: 0;
   font-size: 2em;
   line-height: 1;
 }
 
-.hub-status p {
+.bjorn-status p {
   margin: 0;
   text-wrap: pretty;
 }
 
 /* The time on its own line, in the theme's date style */
-.hub-status time {
+.bjorn-status time {
   display: block;
   margin-block-start: 0.4em;
 }
 
 /* The directive's last line keeps its own margin, so drop it here
    and let the card set the space on both sides. Scripts don't count */
-footer:has(> .hub-status) #footer-directive > :nth-last-child(1 of :not(script, style)) {
+footer:has(> .bjorn-status) #footer-directive > :nth-last-child(1 of :not(script, style)) {
   margin-block-end: 0;
 }
 

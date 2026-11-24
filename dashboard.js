@@ -1,14 +1,14 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.7
+ Version: 0.9.8
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   'use strict';
 
-  const VERSION = '0.9.7';
+  const VERSION = '0.9.8';
   // Where this copy was loaded from, read while it's still running
   const SELF = document.currentScript?.src || '';
 
@@ -21,7 +21,8 @@
   const ADDONS_MARK = '/* ===== Add-ons ===== */';
   const OWN_MARK = '/* ===== Your CSS ===== */';
   const ZONE_START = '\n/* ===== ';
-  const STATE_RE = /\/\* hub (\{[^*]*\}) \*\//;
+  // Written as bjorn, read as hub too: blogs saved before the rename (can go after 1.0)
+  const STATE_RE = /\/\* (?:bjorn|hub) (\{[^*]*\}) \*\//;
 
   /* ---------- Fonts ---------- */
   const CDN = 'https://cdn.jsdelivr.net/npm/@fontsource-variable';
@@ -623,19 +624,23 @@
     const lines = [`  --font: ${f.stack};`];
     const scale = scaleOf(state);
     if (scale !== 1) lines.push(`  --scale: ${scale};`);
+    lines.push(`  --bjorn-addons: ${on.join(' ') || 'none'};`);
+    // The old names too, for add-ons scripts from before the rename (can go after 1.0)
     lines.push(`  --hub-addons: ${on.join(' ') || 'none'};`);
-    if (state.reply) lines.push(`  --hub-reply: "${state.reply}";`);
+    if (state.reply) lines.push(`  --bjorn-reply: "${state.reply}";`, `  --hub-reply: "${state.reply}";`);
     // Off keeps the status saved, so turning it back on brings it back
     if (state.status && state.addons.status) {
-      if (state.status.emoji) lines.push(`  --hub-status-emoji: "${state.status.emoji}";`);
-      lines.push(`  --hub-status-text: "${state.status.text}";`);
-      lines.push(`  --hub-status-at: "${state.status.at}";`);
+      for (const name of ['bjorn', 'hub']) {
+        if (state.status.emoji) lines.push(`  --${name}-status-emoji: "${state.status.emoji}";`);
+        lines.push(`  --${name}-status-text: "${state.status.text}";`);
+        lines.push(`  --${name}-status-at: "${state.status.at}";`);
+      }
     }
 
     const parts = [
       SETTINGS_MARK,
       '/* Written by the Björn tab under Themes. Changes made here are replaced. */',
-      `/* hub ${JSON.stringify(saved)} */`
+      `/* bjorn ${JSON.stringify(saved)} */`
     ];
     const faces = fontFaces(f);
     if (faces) parts.push('', faces);
@@ -1008,7 +1013,7 @@ header nav p {
     const textarea = form?.querySelector('textarea[name="custom_styles"]');
     const tabCss = document.getElementById('tab-css');
     const tabs = document.querySelector('nav.tabs');
-    if (!form || !textarea || !tabCss || !tabs || document.getElementById('tab-hub')) return;
+    if (!form || !textarea || !tabCss || !tabs || document.getElementById('tab-bjorn')) return;
 
     const readOwn = (css) => {
       const z = zone(css, OWN_MARK);
@@ -1026,155 +1031,155 @@ header nav p {
     /* ---------- Styles ---------- */
     const style = document.createElement('style');
     style.textContent = `
-  #hub-panel{display:none}
-  #tab-hub:checked ~ #hub-panel{display:block}
-  #tab-hub:checked ~ #themes-tab{display:none}
-  #tab-hub:checked ~ #styles-form{height:0;overflow:hidden;visibility:hidden}
-  #tab-hub:checked ~ .tabs [for="tab-hub"]{color:var(--heading-color);font-weight:bold}
-  #tab-hub:focus-visible ~ .tabs [for="tab-hub"]{text-decoration:underline}
-  #hub-panel .hub-note[hidden],#hub-panel .hub-update[hidden]{display:none}
-  #hub-panel .hub-update{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1rem}
-  #hub-panel .hub-update button{margin:0}
-  .hub-install{margin:1.5rem 0}
-  .hub-install-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem}
-  .hub-install-actions button{margin:0}
-  .hub-install-say{font-size:small;color:var(--muted)}
-  .hub-current{margin-left:.4em;padding:1px 6px;font-size:small;font-weight:normal;color:var(--muted);border:1px solid var(--border);border-radius:3px;vertical-align:middle}
-  .hub-current[hidden],.hub-theme-row [hidden]{display:none}
-  #hub-panel .hub-note{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 1rem}
-  #hub-panel section{padding:1.5rem 0 .5rem}
-  #hub-panel .hub-divider{margin:1.5rem 0 0;border:0;border-top:1px solid var(--border)}
-  #hub-panel h2{margin:0 0 .75rem;font-size:1.15em}
-  .hub-hint{margin:.6rem 0 0;font-size:.9em;color:var(--muted)}
-  .hub-choices{display:flex;flex-wrap:wrap;gap:8px}
-  .hub-choices + .hub-choices{margin-top:12px}
-  #hub-panel .hub-choices button{display:flex;align-items:center;gap:8px;margin:0;padding:8px 12px;font-size:14px;background:none;color:inherit;border:1px solid var(--border);border-radius:3px}
-  #hub-panel .hub-choices button:hover{border-color:var(--muted);background:none}
-  #hub-panel .hub-fonts button{font-size:16px;padding:6px 14px}
-  #hub-panel .hub-choices button[aria-pressed="true"]{border-color:var(--link-color);box-shadow:inset 0 0 0 1px var(--link-color);color:var(--heading-color)}
-  .hub-dots{display:flex;gap:3px}
-  .hub-shapes{margin-top:12px}
-  .hub-list-icon{width:20px;height:16px;margin-inline-end:8px;vertical-align:-3px;fill:currentColor;opacity:.75}
-  .hub-shape{display:inline-block;width:14px;height:14px;margin-inline-end:6px;vertical-align:-2px;background:currentColor;opacity:.75}
-  .hub-shape-round{border-radius:50%}
-  .hub-shape-rounded{border-radius:30%;corner-shape:squircle}
-  .hub-shape-square{border-radius:1px}
-  .hub-page .av.rounded{border-radius:30%;corner-shape:squircle}
-  .hub-page .av.square{border-radius:4px}
-  .hub-dots span{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px var(--border)}
-  .hub-custom{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr));gap:1rem 2rem;margin-top:1rem;padding:1rem;background:var(--surface);border-radius:var(--radius)}
-  .hub-custom[hidden],.hub-custom fieldset[hidden]{display:none}
-  .hub-custom fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
-  .hub-custom legend{font-weight:bold;padding:0;margin-bottom:.25rem}
-  .hub-custom label{display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:normal;font-size:.9em}
-  #hub-panel .hub-custom input[type="color"]{width:44px;height:28px;padding:0;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer}
-  .hub-custom p{grid-column:1/-1;margin:0;font-size:small;color:var(--muted)}
-  .hub-field{display:flex;flex-direction:column;gap:.4rem;max-width:32rem}
-  .hub-field label{font-weight:normal;font-size:.9em}
-  #hub-panel .hub-field input{width:100%;box-sizing:border-box;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
-  .hub-previews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));gap:1rem}
-  .hub-previews figure{margin:0}
-  .hub-previews figcaption{font-size:small;color:var(--muted);margin-bottom:.4rem}
-  .hub-page{padding:20px 22px 14px;border-radius:3px;box-shadow:0 0 0 1px var(--border);line-height:1.6;font-size:14px}
-  .hub-page :is(b,strong){color:inherit}
-  .hub-page .hd{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:.9em}
-  .hub-page .hd > *{grid-column:2}
-  .hub-page .h-centered{display:flex;flex-direction:column;align-items:center;text-align:center}
-  .hub-page .h-centered .av{margin-bottom:.7em}
-  .hub-page .h-centered .n{justify-content:center}
-  .hub-page .h-inline{display:flex;flex-wrap:wrap;align-items:center;gap:.3em .8em}
-  .hub-page .h-inline .av{width:2em}
-  .hub-page .h-inline .t{font-size:1.1em}
-  .hub-page .h-inline .n{margin:0 0 0 auto}
-  .hub-page .t{font-weight:700;font-size:1.3em;line-height:1.2}
-  .hub-page .av{grid-column:1;grid-row:1/span 2;width:3.6em;aspect-ratio:1;border-radius:50%;background:center/cover no-repeat}
-  .hub-page .a{text-decoration:underline;text-underline-offset:.15em}
-  .hub-page.subtle .a{text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
-  .hub-page.none .a{text-decoration:none}
-  .hub-links span{text-decoration:underline;text-underline-offset:.15em}
-  .hub-links .hub-link-subtle{text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
-  .hub-links .hub-link-none{text-decoration:none}
-  .hub-page .n{display:flex;gap:.8em;margin-top:.2em;font-size:.95em}
-  .hub-page p{margin:1em 0 .8em}
-  .hub-page .q{padding:.6em 1em;border-radius:4px;font-size:.95em}
-  .hub-page .l{display:grid;grid-template-columns:auto 1fr;gap:.3em .9em;margin-top:1em;align-items:baseline}
-  .hub-page .l .r{display:contents}
-  .hub-page .l.split{display:block}
-  .hub-page .l.split .r{display:flex;justify-content:space-between;gap:.9em;padding:.35em 0}
-  .hub-page .l.split .r+.r{border-top:1px solid var(--b)}
-  .hub-page .l.split .d{order:2}
-  .hub-page .l.stacked{display:grid;grid-template-columns:1fr;gap:.6em}
-  .hub-page .l.stacked .r{display:flex;flex-direction:column;gap:.1em}
-  .hub-page .l.stacked .d{order:2}
-  .hub-page .d{font-family:ui-monospace,Menlo,monospace;font-size:.82em}
-  .hub-page .f{margin-top:1.2em;padding-top:.6em;font-size:.82em}
-  .hub-addon{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border)}
-  #hub-panel input.hub-switch{appearance:none;-webkit-appearance:none;flex-shrink:0;width:38px;height:22px;margin:2px 0 0;padding:0;border:0;border-radius:11px;background:color-mix(in srgb,var(--text-color) 25%,transparent);position:relative;cursor:pointer;transition:background .15s}
-  #hub-panel input.hub-switch::before{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--background-color);transition:transform .15s}
-  #hub-panel input.hub-switch:checked{background:var(--link-color)}
-  #hub-panel input.hub-switch:checked::before{transform:translateX(16px)}
-  #hub-panel input.hub-switch:focus-visible{outline:2px solid var(--link-color);outline-offset:2px}
-  .hub-addon > div{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
-  .hub-addon label{display:flex;flex-direction:column;gap:2px;font-weight:normal;cursor:pointer}
-  .hub-addon b{color:var(--heading-color)}
-  .hub-addon label span{font-size:.9em;color:var(--muted)}
-  .hub-addon .hub-field{margin-top:.6rem}
-  .hub-addon .hub-field[hidden]{display:none}
-  .hub-intro{margin:0 0 .75rem;font-size:.9em;color:var(--muted)}
-  .hub-choice-row > div{display:flex;flex-direction:column;gap:.5rem}
-  .hub-choice-row + .hub-choice-row{margin-top:1.5rem}
-  .hub-choice-row b{color:var(--heading-color)}
-  .hub-choice-row .hub-hint{margin:0}
-  .hub-choice-row .hub-field{margin:0}
-  .hub-emoji-field[hidden]{display:none}
-  #hub-panel .hub-emoji-field input{max-width:8rem;font-size:18px}
-  #hub-panel .hub-footer{margin-top:.75rem;font-size:.9em}
-  .hub-footer-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1rem}
-  .hub-footer-acts{display:flex;align-items:center;gap:1rem}
-  .hub-footer-lines{display:grid;gap:.5rem;justify-items:start;margin-top:.75rem}
-  #hub-panel .hub-footer[hidden],.hub-footer-lines[hidden]{display:none}
-  #hub-panel .hub-footer button{margin:0}
-  .hub-footer pre{margin:0;padding:10px 12px;background:var(--code-background-color);color:var(--code-color);border-radius:3px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
-  #hub-panel .hub-meta .hub-addon{padding-top:0;border-top:0}
-  .hub-meta-fields{display:flex;flex-direction:column;gap:.75rem;margin-top:.9rem}
-  .hub-meta-fields[hidden],.hub-meta-check[hidden]{display:none}
-  #hub-panel label.hub-meta-check{display:flex;flex-direction:row;align-items:center;gap:.5rem;font-weight:normal;font-size:.9em}
-  #hub-panel .hub-meta-check input{width:auto;height:auto;margin:0}
-  .hub-meta-fields .hub-hint{margin:0}
-  .hub-meta-preview{display:block;width:100%;max-width:30rem;height:auto;border-radius:3px;box-shadow:0 0 0 1px var(--border)}
-  .hub-own{margin:1.5rem 0 2rem;border-top:1px solid var(--border);padding-top:1rem}
-  .hub-own summary{cursor:pointer;font-weight:bold;color:var(--heading-color)}
-  .hub-own p{margin:.6rem 0;font-size:.9em;color:var(--muted)}
-  #hub-panel .hub-own textarea{width:100%;box-sizing:border-box;min-height:14rem;margin:0;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;tab-size:2}
-  .hub-missing{margin:1.5rem 0}
-  .hub-credit{margin:0 0 1rem;padding-top:1em;border-top:1px solid var(--border);font-size:small;color:var(--muted)}`;
+  #bjorn-panel{display:none}
+  #tab-bjorn:checked ~ #bjorn-panel{display:block}
+  #tab-bjorn:checked ~ #themes-tab{display:none}
+  #tab-bjorn:checked ~ #styles-form{height:0;overflow:hidden;visibility:hidden}
+  #tab-bjorn:checked ~ .tabs [for="tab-bjorn"]{color:var(--heading-color);font-weight:bold}
+  #tab-bjorn:focus-visible ~ .tabs [for="tab-bjorn"]{text-decoration:underline}
+  #bjorn-panel .bjorn-note[hidden],#bjorn-panel .bjorn-update[hidden]{display:none}
+  #bjorn-panel .bjorn-update{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1rem}
+  #bjorn-panel .bjorn-update button{margin:0}
+  .bjorn-install{margin:1.5rem 0}
+  .bjorn-install-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem}
+  .bjorn-install-actions button{margin:0}
+  .bjorn-install-say{font-size:small;color:var(--muted)}
+  .bjorn-current{margin-left:.4em;padding:1px 6px;font-size:small;font-weight:normal;color:var(--muted);border:1px solid var(--border);border-radius:3px;vertical-align:middle}
+  .bjorn-current[hidden],.bjorn-theme-row [hidden]{display:none}
+  #bjorn-panel .bjorn-note{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 1rem}
+  #bjorn-panel section{padding:1.5rem 0 .5rem}
+  #bjorn-panel .bjorn-divider{margin:1.5rem 0 0;border:0;border-top:1px solid var(--border)}
+  #bjorn-panel h2{margin:0 0 .75rem;font-size:1.15em}
+  .bjorn-hint{margin:.6rem 0 0;font-size:.9em;color:var(--muted)}
+  .bjorn-choices{display:flex;flex-wrap:wrap;gap:8px}
+  .bjorn-choices + .bjorn-choices{margin-top:12px}
+  #bjorn-panel .bjorn-choices button{display:flex;align-items:center;gap:8px;margin:0;padding:8px 12px;font-size:14px;background:none;color:inherit;border:1px solid var(--border);border-radius:3px}
+  #bjorn-panel .bjorn-choices button:hover{border-color:var(--muted);background:none}
+  #bjorn-panel .bjorn-fonts button{font-size:16px;padding:6px 14px}
+  #bjorn-panel .bjorn-choices button[aria-pressed="true"]{border-color:var(--link-color);box-shadow:inset 0 0 0 1px var(--link-color);color:var(--heading-color)}
+  .bjorn-dots{display:flex;gap:3px}
+  .bjorn-shapes{margin-top:12px}
+  .bjorn-list-icon{width:20px;height:16px;margin-inline-end:8px;vertical-align:-3px;fill:currentColor;opacity:.75}
+  .bjorn-shape{display:inline-block;width:14px;height:14px;margin-inline-end:6px;vertical-align:-2px;background:currentColor;opacity:.75}
+  .bjorn-shape-round{border-radius:50%}
+  .bjorn-shape-rounded{border-radius:30%;corner-shape:squircle}
+  .bjorn-shape-square{border-radius:1px}
+  .bjorn-page .av.rounded{border-radius:30%;corner-shape:squircle}
+  .bjorn-page .av.square{border-radius:4px}
+  .bjorn-dots span{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px var(--border)}
+  .bjorn-custom{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr));gap:1rem 2rem;margin-top:1rem;padding:1rem;background:var(--surface);border-radius:var(--radius)}
+  .bjorn-custom[hidden],.bjorn-custom fieldset[hidden]{display:none}
+  .bjorn-custom fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+  .bjorn-custom legend{font-weight:bold;padding:0;margin-bottom:.25rem}
+  .bjorn-custom label{display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:normal;font-size:.9em}
+  #bjorn-panel .bjorn-custom input[type="color"]{width:44px;height:28px;padding:0;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer}
+  .bjorn-custom p{grid-column:1/-1;margin:0;font-size:small;color:var(--muted)}
+  .bjorn-field{display:flex;flex-direction:column;gap:.4rem;max-width:32rem}
+  .bjorn-field label{font-weight:normal;font-size:.9em}
+  #bjorn-panel .bjorn-field input{width:100%;box-sizing:border-box;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
+  .bjorn-previews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));gap:1rem}
+  .bjorn-previews figure{margin:0}
+  .bjorn-previews figcaption{font-size:small;color:var(--muted);margin-bottom:.4rem}
+  .bjorn-page{padding:20px 22px 14px;border-radius:3px;box-shadow:0 0 0 1px var(--border);line-height:1.6;font-size:14px}
+  .bjorn-page :is(b,strong){color:inherit}
+  .bjorn-page .hd{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:.9em}
+  .bjorn-page .hd > *{grid-column:2}
+  .bjorn-page .h-centered{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .bjorn-page .h-centered .av{margin-bottom:.7em}
+  .bjorn-page .h-centered .n{justify-content:center}
+  .bjorn-page .h-inline{display:flex;flex-wrap:wrap;align-items:center;gap:.3em .8em}
+  .bjorn-page .h-inline .av{width:2em}
+  .bjorn-page .h-inline .t{font-size:1.1em}
+  .bjorn-page .h-inline .n{margin:0 0 0 auto}
+  .bjorn-page .t{font-weight:700;font-size:1.3em;line-height:1.2}
+  .bjorn-page .av{grid-column:1;grid-row:1/span 2;width:3.6em;aspect-ratio:1;border-radius:50%;background:center/cover no-repeat}
+  .bjorn-page .a{text-decoration:underline;text-underline-offset:.15em}
+  .bjorn-page.subtle .a{text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
+  .bjorn-page.none .a{text-decoration:none}
+  .bjorn-links span{text-decoration:underline;text-underline-offset:.15em}
+  .bjorn-links .bjorn-link-subtle{text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
+  .bjorn-links .bjorn-link-none{text-decoration:none}
+  .bjorn-page .n{display:flex;gap:.8em;margin-top:.2em;font-size:.95em}
+  .bjorn-page p{margin:1em 0 .8em}
+  .bjorn-page .q{padding:.6em 1em;border-radius:4px;font-size:.95em}
+  .bjorn-page .l{display:grid;grid-template-columns:auto 1fr;gap:.3em .9em;margin-top:1em;align-items:baseline}
+  .bjorn-page .l .r{display:contents}
+  .bjorn-page .l.split{display:block}
+  .bjorn-page .l.split .r{display:flex;justify-content:space-between;gap:.9em;padding:.35em 0}
+  .bjorn-page .l.split .r+.r{border-top:1px solid var(--b)}
+  .bjorn-page .l.split .d{order:2}
+  .bjorn-page .l.stacked{display:grid;grid-template-columns:1fr;gap:.6em}
+  .bjorn-page .l.stacked .r{display:flex;flex-direction:column;gap:.1em}
+  .bjorn-page .l.stacked .d{order:2}
+  .bjorn-page .d{font-family:ui-monospace,Menlo,monospace;font-size:.82em}
+  .bjorn-page .f{margin-top:1.2em;padding-top:.6em;font-size:.82em}
+  .bjorn-addon{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border)}
+  #bjorn-panel input.bjorn-switch{appearance:none;-webkit-appearance:none;flex-shrink:0;width:38px;height:22px;margin:2px 0 0;padding:0;border:0;border-radius:11px;background:color-mix(in srgb,var(--text-color) 25%,transparent);position:relative;cursor:pointer;transition:background .15s}
+  #bjorn-panel input.bjorn-switch::before{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--background-color);transition:transform .15s}
+  #bjorn-panel input.bjorn-switch:checked{background:var(--link-color)}
+  #bjorn-panel input.bjorn-switch:checked::before{transform:translateX(16px)}
+  #bjorn-panel input.bjorn-switch:focus-visible{outline:2px solid var(--link-color);outline-offset:2px}
+  .bjorn-addon > div{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .bjorn-addon label{display:flex;flex-direction:column;gap:2px;font-weight:normal;cursor:pointer}
+  .bjorn-addon b{color:var(--heading-color)}
+  .bjorn-addon label span{font-size:.9em;color:var(--muted)}
+  .bjorn-addon .bjorn-field{margin-top:.6rem}
+  .bjorn-addon .bjorn-field[hidden]{display:none}
+  .bjorn-intro{margin:0 0 .75rem;font-size:.9em;color:var(--muted)}
+  .bjorn-choice-row > div{display:flex;flex-direction:column;gap:.5rem}
+  .bjorn-choice-row + .bjorn-choice-row{margin-top:1.5rem}
+  .bjorn-choice-row b{color:var(--heading-color)}
+  .bjorn-choice-row .bjorn-hint{margin:0}
+  .bjorn-choice-row .bjorn-field{margin:0}
+  .bjorn-emoji-field[hidden]{display:none}
+  #bjorn-panel .bjorn-emoji-field input{max-width:8rem;font-size:18px}
+  #bjorn-panel .bjorn-footer{margin-top:.75rem;font-size:.9em}
+  .bjorn-footer-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1rem}
+  .bjorn-footer-acts{display:flex;align-items:center;gap:1rem}
+  .bjorn-footer-lines{display:grid;gap:.5rem;justify-items:start;margin-top:.75rem}
+  #bjorn-panel .bjorn-footer[hidden],.bjorn-footer-lines[hidden]{display:none}
+  #bjorn-panel .bjorn-footer button{margin:0}
+  .bjorn-footer pre{margin:0;padding:10px 12px;background:var(--code-background-color);color:var(--code-color);border-radius:3px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+  #bjorn-panel .bjorn-meta .bjorn-addon{padding-top:0;border-top:0}
+  .bjorn-meta-fields{display:flex;flex-direction:column;gap:.75rem;margin-top:.9rem}
+  .bjorn-meta-fields[hidden],.bjorn-meta-check[hidden]{display:none}
+  #bjorn-panel label.bjorn-meta-check{display:flex;flex-direction:row;align-items:center;gap:.5rem;font-weight:normal;font-size:.9em}
+  #bjorn-panel .bjorn-meta-check input{width:auto;height:auto;margin:0}
+  .bjorn-meta-fields .bjorn-hint{margin:0}
+  .bjorn-meta-preview{display:block;width:100%;max-width:30rem;height:auto;border-radius:3px;box-shadow:0 0 0 1px var(--border)}
+  .bjorn-own{margin:1.5rem 0 2rem;border-top:1px solid var(--border);padding-top:1rem}
+  .bjorn-own summary{cursor:pointer;font-weight:bold;color:var(--heading-color)}
+  .bjorn-own p{margin:.6rem 0;font-size:.9em;color:var(--muted)}
+  #bjorn-panel .bjorn-own textarea{width:100%;box-sizing:border-box;min-height:14rem;margin:0;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;tab-size:2}
+  .bjorn-missing{margin:1.5rem 0}
+  .bjorn-credit{margin:0 0 1rem;padding-top:1em;border-top:1px solid var(--border);font-size:small;color:var(--muted)}`;
     document.head.append(style);
 
     /* ---------- The tab and the panel ---------- */
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = 'tab';
-    radio.id = 'tab-hub';
+    radio.id = 'tab-bjorn';
     radio.className = 'tab-toggle';
     tabCss.after(radio);
 
     const label = document.createElement('label');
-    label.htmlFor = 'tab-hub';
+    label.htmlFor = 'tab-bjorn';
     label.textContent = 'Björn';
     tabs.append(' ', label);
 
     const panel = document.createElement('div');
-    panel.id = 'hub-panel';
+    panel.id = 'bjorn-panel';
     form.after(panel);
 
     // Back on this tab after Publish reloads the page
     form.addEventListener('submit', () => {
-      try { if (radio.checked) sessionStorage.setItem('hub-tab', '1'); } catch {}
+      try { if (radio.checked) sessionStorage.setItem('bjorn-tab', '1'); } catch {}
       rememberStatus(readState(textarea.value).addons.status);
     });
     try {
-      if (sessionStorage.getItem('hub-tab')) {
-        sessionStorage.removeItem('hub-tab');
+      if (sessionStorage.getItem('bjorn-tab')) {
+        sessionStorage.removeItem('bjorn-tab');
         radio.checked = true;
       }
     } catch {}
@@ -1185,11 +1190,11 @@ header nav p {
     /* ---------- A Björn card first in Bear's theme list ---------- */
     const list = document.querySelector('#themes-tab .theme-list');
     const card = document.createElement('li');
-    card.className = 'theme-row hub-theme-row';
+    card.className = 'theme-row bjorn-theme-row';
     card.innerHTML = `
     <img class="theme-thumbnail" src="${cdn(VERSION)}preview.png" alt="" width="900" height="600" loading="lazy">
     <div class="theme-info">
-      <h2>Björn <span class="hub-current" hidden>Current</span></h2>
+      <h2>Björn <span class="bjorn-current" hidden>Current</span></h2>
       <div class="theme-actions">
         <a href="#" data-act="preview" aria-label="Preview Björn on your blog (opens in a new tab)">Preview <span aria-hidden="true">↗</span></a>
         <button type="button" data-act="open"></button>
@@ -1205,7 +1210,7 @@ header nav p {
     // Installed means published: what's on the blog now
     function syncCard() {
       const on = original.includes(THEME_MARK);
-      card.querySelector('.hub-current').hidden = !on;
+      card.querySelector('.bjorn-current').hidden = !on;
       card.querySelector('[data-act="preview"]').hidden = on;
       card.querySelector('[data-act="open"]').textContent = on ? 'Settings' : 'Install';
     }
@@ -1217,14 +1222,14 @@ header nav p {
     /* ---------- Install: on a blog without Björn ---------- */
     function installView() {
       panel.innerHTML = `
-  <section class="hub-install">
+  <section class="bjorn-install">
     <h2>Install Björn</h2>
     <p>Björn isn’t on your blog yet. Install adds it here, ready for you to look over before you publish.</p>
-    <p class="hub-hint">Your current CSS is kept under Your CSS, turned off, so nothing is lost. Until you publish, Revert puts everything back.</p>
-    <p class="hub-install-actions"><button type="button" data-act="install">Install Björn</button><a href="#" data-act="preview">Preview on your blog <span aria-hidden="true">↗</span></a><span class="hub-install-say" aria-live="polite"></span></p>
+    <p class="bjorn-hint">Your current CSS is kept under Your CSS, turned off, so nothing is lost. Until you publish, Revert puts everything back.</p>
+    <p class="bjorn-install-actions"><button type="button" data-act="install">Install Björn</button><a href="#" data-act="preview">Preview on your blog <span aria-hidden="true">↗</span></a><span class="bjorn-install-say" aria-live="polite"></span></p>
   </section>`;
       const button = panel.querySelector('[data-act="install"]');
-      const say = panel.querySelector('.hub-install-say');
+      const say = panel.querySelector('.bjorn-install-say');
       panel.querySelector('[data-act="preview"]').addEventListener('click', (e) => { e.preventDefault(); previewBjorn(); });
       button.addEventListener('click', async () => {
         button.disabled = true;
@@ -1248,177 +1253,177 @@ header nav p {
 
     // A status posted from this page: it's already published, so it joins
     // both what's on screen and what counts as published
-    document.addEventListener('hub:status', (e) => {
+    document.addEventListener('bjorn:status', (e) => {
       state.status = e.detail.status;
       original = e.detail.css;
       apply();
     });
 
-    const addonHTML = (a) => `<div class="hub-addon"><input type="checkbox" class="hub-switch" id="hub-addon-${a.id}" data-addon="${a.id}"><div><label for="hub-addon-${a.id}"><b>${a.name}</b><span>${a.desc}</span></label>${a.id === 'reply' ? `<div class="hub-field" hidden><input type="text" id="hub-reply" aria-label="Reply address" placeholder="you@example.com" autocomplete="off" spellcheck="false"><p class="hub-hint">Your email address, or a link to a contact page like ${newTab('https://letterbird.co', 'Letterbird')}.</p></div>` : ''}</div></div>`;
+    const addonHTML = (a) => `<div class="bjorn-addon"><input type="checkbox" class="bjorn-switch" id="bjorn-addon-${a.id}" data-addon="${a.id}"><div><label for="bjorn-addon-${a.id}"><b>${a.name}</b><span>${a.desc}</span></label>${a.id === 'reply' ? `<div class="bjorn-field" hidden><input type="text" id="bjorn-reply" aria-label="Reply address" placeholder="you@example.com" autocomplete="off" spellcheck="false"><p class="bjorn-hint">Your email address, or a link to a contact page like ${newTab('https://letterbird.co', 'Letterbird')}.</p></div>` : ''}</div></div>`;
     const tagsHTML = `<section>
-    <h2 id="hub-tags-label">Tags</h2>
-    <div class="hub-choices hub-tags" role="group" aria-labelledby="hub-tags-label">${TAGS.map((t) => `<button type="button" data-tags="${t.id}">${t.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-tags-hint"></p>
+    <h2 id="bjorn-tags-label">Tags</h2>
+    <div class="bjorn-choices bjorn-tags" role="group" aria-labelledby="bjorn-tags-label">${TAGS.map((t) => `<button type="button" data-tags="${t.id}">${t.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-tags-hint"></p>
   </section>`;
     const upvoteHTML = `<section>
-    <h2 id="hub-upvote-label">Upvote button</h2>
-      <div class="hub-choices hub-upvotes" role="group" aria-labelledby="hub-upvote-label">${UPVOTES.map((u) => `<button type="button" data-upvote="${u.id}">${u.id === 'emoji' ? `<span class="hub-upvote-emoji" aria-hidden="true">${EMOJI}</span> ` : u.icon ? `<span aria-hidden="true">${u.icon}</span> ` : ''}${u.name}</button>`).join('')}</div>
-      <div class="hub-field hub-emoji-field" hidden><input type="text" id="hub-upvote-emoji" aria-label="Upvote emoji" placeholder="${EMOJI}" autocomplete="off" spellcheck="false"><p class="hub-hint">Any emoji, like 🧸, 🍞 or ☕. It fades once toasted.</p></div>
-      <p class="hub-hint hub-upvote-hint"></p>
+    <h2 id="bjorn-upvote-label">Upvote button</h2>
+      <div class="bjorn-choices bjorn-upvotes" role="group" aria-labelledby="bjorn-upvote-label">${UPVOTES.map((u) => `<button type="button" data-upvote="${u.id}">${u.id === 'emoji' ? `<span class="bjorn-upvote-emoji" aria-hidden="true">${EMOJI}</span> ` : u.icon ? `<span aria-hidden="true">${u.icon}</span> ` : ''}${u.name}</button>`).join('')}</div>
+      <div class="bjorn-field bjorn-emoji-field" hidden><input type="text" id="bjorn-upvote-emoji" aria-label="Upvote emoji" placeholder="${EMOJI}" autocomplete="off" spellcheck="false"><p class="bjorn-hint">Any emoji, like 🧸, 🍞 or ☕. It fades once toasted.</p></div>
+      <p class="bjorn-hint bjorn-upvote-hint"></p>
   </section>`;
     const group = (g) => ADDONS.filter((a) => a.group === g).map(addonHTML).join('');
 
     panel.innerHTML = `
-  <p class="message info hub-update" hidden>
+  <p class="message info bjorn-update" hidden>
     <span></span>
     <button type="button" data-act="update">Update</button>
   </p>
-  <p class="message info hub-note" hidden>
+  <p class="message info bjorn-note" hidden>
     <span>${NOTE}</span>
     <button type="button" class="link-button" data-act="revert" hidden>Revert</button>
   </p>
   <section>
     <h2>Preview</h2>
-    <div class="hub-previews"></div>
+    <div class="bjorn-previews"></div>
   </section>
   <section>
     <h2>Font</h2>
-    <div class="hub-choices hub-fonts" role="group" aria-label="Fonts">${Object.entries(FONTS).map(([id, f]) => `<button type="button" data-font="${id}" style="font-family:${f.stack.replace(/"/g, "'")}">${f.name}</button>`).join('')}</div>
-    <div class="hub-choices hub-sizes" role="group" aria-label="Text size">${SIZES.map((z) => `<button type="button" data-size="${z.id}">${z.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-size-hint"></p>
+    <div class="bjorn-choices bjorn-fonts" role="group" aria-label="Fonts">${Object.entries(FONTS).map(([id, f]) => `<button type="button" data-font="${id}" style="font-family:${f.stack.replace(/"/g, "'")}">${f.name}</button>`).join('')}</div>
+    <div class="bjorn-choices bjorn-sizes" role="group" aria-label="Text size">${SIZES.map((z) => `<button type="button" data-size="${z.id}">${z.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-size-hint"></p>
   </section>
   <section>
     <h2>Colors</h2>
-    <div class="hub-choices hub-presets" role="group" aria-label="Color presets"></div>
-    <div class="hub-choices hub-modes" role="group" aria-label="Light or dark">${MODES.map((m) => `<button type="button" data-mode="${m.id}">${m.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-mode-hint"></p>
-    <div class="hub-custom" hidden>
+    <div class="bjorn-choices bjorn-presets" role="group" aria-label="Color presets"></div>
+    <div class="bjorn-choices bjorn-modes" role="group" aria-label="Light or dark">${MODES.map((m) => `<button type="button" data-mode="${m.id}">${m.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-mode-hint"></p>
+    <div class="bjorn-custom" hidden>
       ${['light', 'dark'].map((mode) => `<fieldset data-for="${mode}"><legend>${mode === 'light' ? 'Light' : 'Dark'}</legend>${KEYS.map((k) => `<label>${LABELS[k]} <input type="color" data-mode="${mode}" data-key="${k}"></label>`).join('')}</fieldset>`).join('')}
       <p>Borders, muted text and visited links are worked out from these three.</p>
     </div>
   </section>
   <section>
     <h2>Links</h2>
-    <div class="hub-choices hub-links" role="group" aria-label="Link style">${LINKS.map((l) => `<button type="button" data-links="${l.id}"><span class="hub-link-${l.id}">${l.name}</span></button>`).join('')}</div>
-    <p class="hub-hint hub-links-hint"></p>
+    <div class="bjorn-choices bjorn-links" role="group" aria-label="Link style">${LINKS.map((l) => `<button type="button" data-links="${l.id}"><span class="bjorn-link-${l.id}">${l.name}</span></button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-links-hint"></p>
   </section>
-  <hr class="hub-divider">
+  <hr class="bjorn-divider">
   <section>
     <h2>Width</h2>
-    <div class="hub-choices hub-widths" role="group" aria-label="Page width">${WIDTHS.map((w) => `<button type="button" data-width="${w.id}"><svg class="hub-list-icon" viewBox="0 0 20 16" aria-hidden="true">${WIDTH_ICONS[w.id]}</svg>${w.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-widths-hint"></p>
+    <div class="bjorn-choices bjorn-widths" role="group" aria-label="Page width">${WIDTHS.map((w) => `<button type="button" data-width="${w.id}"><svg class="bjorn-list-icon" viewBox="0 0 20 16" aria-hidden="true">${WIDTH_ICONS[w.id]}</svg>${w.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-widths-hint"></p>
   </section>
   <section>
     <h2>Header</h2>
-    <div class="hub-choices hub-headers" role="group" aria-label="Header style">${HEADERS.map((h) => `<button type="button" data-header="${h.id}"><svg class="hub-list-icon" viewBox="0 0 20 16" aria-hidden="true">${HEADER_ICONS[h.id]}</svg>${h.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-headers-hint"></p>
+    <div class="bjorn-choices bjorn-headers" role="group" aria-label="Header style">${HEADERS.map((h) => `<button type="button" data-header="${h.id}"><svg class="bjorn-list-icon" viewBox="0 0 20 16" aria-hidden="true">${HEADER_ICONS[h.id]}</svg>${h.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-headers-hint"></p>
   </section>
   <section>
     <h2>Blog list</h2>
-    <div class="hub-choices hub-lists" role="group" aria-label="Blog list style">${LISTS.map((l) => `<button type="button" data-list="${l.id}"><svg class="hub-list-icon" viewBox="0 0 20 16" aria-hidden="true">${LIST_ICONS[l.id]}</svg>${l.name}</button>`).join('')}</div>
-    <p class="hub-hint hub-lists-hint"></p>
+    <div class="bjorn-choices bjorn-lists" role="group" aria-label="Blog list style">${LISTS.map((l) => `<button type="button" data-list="${l.id}"><svg class="bjorn-list-icon" viewBox="0 0 20 16" aria-hidden="true">${LIST_ICONS[l.id]}</svg>${l.name}</button>`).join('')}</div>
+    <p class="bjorn-hint bjorn-lists-hint"></p>
   </section>
-  <hr class="hub-divider">
+  <hr class="bjorn-divider">
   <section>
     <h2>Avatar</h2>
-    <div class="hub-field">
-      <input type="url" id="hub-avatar" aria-label="Avatar image link" placeholder="https://example.com/avatar.jpg" autocomplete="off" spellcheck="false">
+    <div class="bjorn-field">
+      <input type="url" id="bjorn-avatar" aria-label="Avatar image link" placeholder="https://example.com/avatar.jpg" autocomplete="off" spellcheck="false">
     </div>
-    <div class="hub-choices hub-shapes" role="group" aria-label="Avatar shape" hidden>${SHAPES.map((a) => `<button type="button" data-shape="${a.id}"><span class="hub-shape hub-shape-${a.id}" aria-hidden="true"></span>${a.name}</button>`).join('')}</div>
-    <p class="hub-hint">An image beside your blog title. Paste its link from ${newTab(MEDIA_URL, 'Media')}.</p>
+    <div class="bjorn-choices bjorn-shapes" role="group" aria-label="Avatar shape" hidden>${SHAPES.map((a) => `<button type="button" data-shape="${a.id}"><span class="bjorn-shape bjorn-shape-${a.id}" aria-hidden="true"></span>${a.name}</button>`).join('')}</div>
+    <p class="bjorn-hint">An image beside your blog title. Paste its link from ${newTab(MEDIA_URL, 'Media')}.</p>
   </section>
   ${tagsHTML}
   ${upvoteHTML}
-  <hr class="hub-divider">
+  <hr class="bjorn-divider">
   <section>
     <h2>Post extras</h2>
-    <p class="hub-intro">Little additions at the end of each post.</p>
-    <div class="hub-addons">${group('post')}</div>
+    <p class="bjorn-intro">Little additions at the end of each post.</p>
+    <div class="bjorn-addons">${group('post')}</div>
   </section>
   <section>
     <h2>Blog extras</h2>
-    <p class="hub-intro">Small touches around the blog.</p>
-    <div class="hub-addons">${group('blog')}</div>
-    <div class="message offer hub-footer" hidden>
-      <div class="hub-footer-head"><span class="hub-footer-say">The extras need a few lines in your ${newTab(DIRECTIVES_URL, 'footer directive')}.</span><span class="hub-footer-acts"><button type="button" data-act="add-footer">Add to footer</button><button type="button" class="link-button" data-act="show-footer" aria-expanded="false">Show the lines</button></span></div>
-      <div class="hub-footer-lines" hidden><pre></pre><button type="button" data-act="copy-footer">Copy</button></div>
+    <p class="bjorn-intro">Small touches around the blog.</p>
+    <div class="bjorn-addons">${group('blog')}</div>
+    <div class="message offer bjorn-footer" hidden>
+      <div class="bjorn-footer-head"><span class="bjorn-footer-say">The extras need a few lines in your ${newTab(DIRECTIVES_URL, 'footer directive')}.</span><span class="bjorn-footer-acts"><button type="button" data-act="add-footer">Add to footer</button><button type="button" class="link-button" data-act="show-footer" aria-expanded="false">Show the lines</button></span></div>
+      <div class="bjorn-footer-lines" hidden><pre></pre><button type="button" data-act="copy-footer">Copy</button></div>
     </div>
   </section>
-  <hr class="hub-divider">
-  <section class="hub-meta">
+  <hr class="bjorn-divider">
+  <section class="bjorn-meta">
     <h2>Meta image</h2>
-    <div class="hub-addon">
-      <input type="checkbox" class="hub-switch" id="hub-meta-on">
+    <div class="bjorn-addon">
+      <input type="checkbox" class="bjorn-switch" id="bjorn-meta-on">
       <div>
-        <label for="hub-meta-on"><b>Make share images for your posts</b><span>A Meta image button in the editor turns the post title into an image in your style.</span></label>
-        <div class="hub-meta-fields" hidden>
-          <div class="hub-field"><label for="hub-meta-name">Name</label><input type="text" id="hub-meta-name" autocomplete="off"></div>
-          <div class="hub-field"><label for="hub-meta-tagline">Domain or tagline</label><input type="text" id="hub-meta-tagline" autocomplete="off" spellcheck="false"></div>
-          <label class="hub-meta-check"><input type="checkbox" id="hub-meta-avatar"> Show avatar</label>
-          <p class="hub-hint">All optional. Here’s how a post will look when shared:</p>
-          <canvas class="hub-meta-preview" width="1200" height="630" role="img" aria-label="Preview of a share image"></canvas>
+        <label for="bjorn-meta-on"><b>Make share images for your posts</b><span>A Meta image button in the editor turns the post title into an image in your style.</span></label>
+        <div class="bjorn-meta-fields" hidden>
+          <div class="bjorn-field"><label for="bjorn-meta-name">Name</label><input type="text" id="bjorn-meta-name" autocomplete="off"></div>
+          <div class="bjorn-field"><label for="bjorn-meta-tagline">Domain or tagline</label><input type="text" id="bjorn-meta-tagline" autocomplete="off" spellcheck="false"></div>
+          <label class="bjorn-meta-check"><input type="checkbox" id="bjorn-meta-avatar"> Show avatar</label>
+          <p class="bjorn-hint">All optional. Here’s how a post will look when shared:</p>
+          <canvas class="bjorn-meta-preview" width="1200" height="630" role="img" aria-label="Preview of a share image"></canvas>
         </div>
       </div>
     </div>
   </section>
-  <details class="hub-own">
+  <details class="bjorn-own">
     <summary>Your CSS</summary>
     <p>Fine-tune the look of your blog with your own CSS. Kept when you update Björn.</p>
     <textarea spellcheck="false" aria-label="Your CSS"></textarea>
   </details>
-  <p class="hub-credit">Björn ${VERSION} by <a href="https://robertbirming.com/bjorn/" target="_blank" rel="noopener">Robert</a> · Enjoying it? <a href="https://ko-fi.com/birming" target="_blank" rel="noopener">Buy me a coffee</a></p>`;
+  <p class="bjorn-credit">Björn ${VERSION} by <a href="https://robertbirming.com/bjorn/" target="_blank" rel="noopener">Robert</a> · Enjoying it? <a href="https://ko-fi.com/birming" target="_blank" rel="noopener">Buy me a coffee</a></p>`;
 
     const $ = (s) => panel.querySelector(s);
-    const fontsEl = $('.hub-fonts');
-    const sizesEl = $('.hub-sizes');
-    const sizeHint = $('.hub-size-hint');
-    const presetsEl = $('.hub-presets');
-    const modesEl = $('.hub-modes');
-    const modeHint = $('.hub-mode-hint');
-    const customEl = $('.hub-custom');
-    const linksEl = $('.hub-links');
-    const linksHint = $('.hub-links-hint');
-    const avatarInput = $('#hub-avatar');
-    const shapesEl = $('.hub-shapes');
-    const listsEl = $('.hub-lists');
-    const widthsEl = $('.hub-widths');
-    const widthsHint = $('.hub-widths-hint');
-    const headersEl = $('.hub-headers');
-    const headersHint = $('.hub-headers-hint');
-    const listsHint = $('.hub-lists-hint');
-    const previewsEl = $('.hub-previews');
+    const fontsEl = $('.bjorn-fonts');
+    const sizesEl = $('.bjorn-sizes');
+    const sizeHint = $('.bjorn-size-hint');
+    const presetsEl = $('.bjorn-presets');
+    const modesEl = $('.bjorn-modes');
+    const modeHint = $('.bjorn-mode-hint');
+    const customEl = $('.bjorn-custom');
+    const linksEl = $('.bjorn-links');
+    const linksHint = $('.bjorn-links-hint');
+    const avatarInput = $('#bjorn-avatar');
+    const shapesEl = $('.bjorn-shapes');
+    const listsEl = $('.bjorn-lists');
+    const widthsEl = $('.bjorn-widths');
+    const widthsHint = $('.bjorn-widths-hint');
+    const headersEl = $('.bjorn-headers');
+    const headersHint = $('.bjorn-headers-hint');
+    const listsHint = $('.bjorn-lists-hint');
+    const previewsEl = $('.bjorn-previews');
     const revertBtn = $('[data-act="revert"]');
-    const noteEl = $('.hub-note');
+    const noteEl = $('.bjorn-note');
     const noteText = noteEl.querySelector('span');
-    const updateEl = $('.hub-update');
+    const updateEl = $('.bjorn-update');
     const updateText = updateEl.querySelector('span');
     const updateBtn = $('[data-act="update"]');
     revertBtn.hidden = false;
     // Edits in the Custom CSS tab count too
     textarea.addEventListener('input', () => syncNote());
-    const metaOn = $('#hub-meta-on');
-    const metaFields = $('.hub-meta-fields');
-    const metaName = $('#hub-meta-name');
-    const metaTagline = $('#hub-meta-tagline');
-    const metaAvatar = $('#hub-meta-avatar');
-    const metaPreview = $('.hub-meta-preview');
+    const metaOn = $('#bjorn-meta-on');
+    const metaFields = $('.bjorn-meta-fields');
+    const metaName = $('#bjorn-meta-name');
+    const metaTagline = $('#bjorn-meta-tagline');
+    const metaAvatar = $('#bjorn-meta-avatar');
+    const metaPreview = $('.bjorn-meta-preview');
     // Every switch and choice row below Meta image
     const addonsEl = panel;
-    const tagsEl = $('.hub-tags');
-    const tagsHint = $('.hub-tags-hint');
-    const upvotesEl = $('.hub-upvotes');
-    const emojiField = $('#hub-upvote-emoji');
-    const emojiPreview = $('.hub-upvote-emoji');
-    const upvoteHint = $('.hub-upvote-hint');
-    const replyField = $('#hub-reply');
-    const footerEl = $('.hub-footer');
+    const tagsEl = $('.bjorn-tags');
+    const tagsHint = $('.bjorn-tags-hint');
+    const upvotesEl = $('.bjorn-upvotes');
+    const emojiField = $('#bjorn-upvote-emoji');
+    const emojiPreview = $('.bjorn-upvote-emoji');
+    const upvoteHint = $('.bjorn-upvote-hint');
+    const replyField = $('#bjorn-reply');
+    const footerEl = $('.bjorn-footer');
     const footerCode = footerEl.querySelector('pre');
-    const footerSay = footerEl.querySelector('.hub-footer-say');
+    const footerSay = footerEl.querySelector('.bjorn-footer-say');
     const addFooterBtn = $('[data-act="add-footer"]');
     const showFooterBtn = $('[data-act="show-footer"]');
-    const footerLines = footerEl.querySelector('.hub-footer-lines');
+    const footerLines = footerEl.querySelector('.bjorn-footer-lines');
     const copyBtn = $('[data-act="copy-footer"]');
-    const ownEl = $('.hub-own');
+    const ownEl = $('.bjorn-own');
     const ownInput = ownEl.querySelector('textarea');
 
     // Each font's name is shown in the font itself
@@ -1439,7 +1444,7 @@ header nav p {
       const size = Math.round(14 * scaleOf(state) * 100) / 100;
       const avatar = state.avatar ? `<span class="av ${state.avatarShape}" style="background-image:url('${state.avatar.replace(/'/g, '%27')}')"></span>` : '';
       return `<figure><figcaption>${label}</figcaption>
-  <div class="hub-page ${state.links}" style="padding-inline:${WIDTHS.find((w) => w.id === state.width).pad};background:${c.bg};color:${c.text};font-family:${f.stack.replace(/"/g, "'")};font-size:${size}px">
+  <div class="bjorn-page ${state.links}" style="padding-inline:${WIDTHS.find((w) => w.id === state.width).pad};background:${c.bg};color:${c.text};font-family:${f.stack.replace(/"/g, "'")};font-size:${size}px">
     <div class="${state.avatar ? 'hd' : 'hn'} h-${state.header}">${avatar}<div class="t">Your blog</div>
     <div class="n"><span class="a" style="color:${c.link}">Home</span><span class="a" style="color:${c.link}">Blog</span></div></div>
     <p>Notes on small things, written slowly. Here is <span class="a" style="color:${c.link}">a link</span>, some <b>bold words</b> and a bit of <i>italic</i>.</p>
@@ -1467,7 +1472,7 @@ header nav p {
       linksHint.textContent = LINKS.find((l) => l.id === state.links).hint;
 
       const choices = PRESETS.concat([{ id: 'custom', name: 'Custom', ...state.custom }]);
-      presetsEl.innerHTML = choices.map((p) => `<button type="button" data-preset="${p.id}" aria-pressed="${p.id === state.preset}"><span class="hub-dots" aria-hidden="true">${KEYS.map((k) => `<span style="background:${p[swatch][k]}"></span>`).join('')}</span>${p.name}</button>`).join('');
+      presetsEl.innerHTML = choices.map((p) => `<button type="button" data-preset="${p.id}" aria-pressed="${p.id === state.preset}"><span class="bjorn-dots" aria-hidden="true">${KEYS.map((k) => `<span style="background:${p[swatch][k]}"></span>`).join('')}</span>${p.name}</button>`).join('');
 
       customEl.hidden = state.preset !== 'custom';
       customEl.querySelectorAll('fieldset').forEach((fs) => { fs.hidden = !modes.includes(fs.dataset.for); });
@@ -1500,11 +1505,11 @@ header nav p {
       }[state.tags];
       upvotesEl.querySelectorAll('[data-upvote]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.upvote === state.upvote));
       emojiPreview.textContent = state.upvoteEmoji;
-      emojiField.closest('.hub-field').hidden = state.upvote !== 'emoji';
+      emojiField.closest('.bjorn-field').hidden = state.upvote !== 'emoji';
       upvoteHint.innerHTML = state.upvote === 'hidden'
         ? `To also keep a post off Bear’s ${newTab('https://bearblog.dev/discover/', 'discovery feed')}, add <code>discoverable: false</code> to its header.`
         : `To hide the number, use “Hide upvotes” in Bear’s ${newTab(ADVANCED_URL, 'advanced settings')}.`;
-      replyField.closest('.hub-field').hidden = !state.addons.reply;
+      replyField.closest('.bjorn-field').hidden = !state.addons.reply;
 
       footerCode.textContent = FOOTER_LINES.join('\n');
 
@@ -1725,7 +1730,7 @@ header nav p {
         const check = await loadDirectives();
         if (missingLines(check.footer.value).length) throw new Error('Not saved');
         footerSay.textContent = 'Added ✓';
-        footerEl.querySelector('.hub-footer-acts').hidden = true;
+        footerEl.querySelector('.bjorn-footer-acts').hidden = true;
         footerLines.hidden = true;
         setTimeout(() => { footerEl.hidden = true; }, 2000);
       } catch (error) {
@@ -1784,7 +1789,7 @@ header nav p {
   function format() {
     const ta = document.getElementById('body_content');
     const bar = document.querySelector('.helptext.sticky');
-    if (!ta || !bar || document.getElementById('hub-format')) return;
+    if (!ta || !bar || document.getElementById('bjorn-format')) return;
 
     // Wait until every other plugin has had its turn, then step aside if
     // another toolbar is already here: the old Markdown toolbar, or an
@@ -1800,26 +1805,26 @@ header nav p {
       const isMac = /Mac|iPhone|iPad|iPod/i.test(platform);
       const MOD = isMac ? 'Cmd' : 'Ctrl';
       const KEY = isMac ? 'Meta' : 'Control';
-      const STORE = 'hub-format-open';
+      const STORE = 'bjorn-format-open';
 
       const style = document.createElement('style');
       style.textContent = `
-#hub-format{display:flex;flex-wrap:wrap;align-items:center;flex-basis:100%;gap:2px;margin:-3px 0 3px;padding:6px 0 4px;border-top:1px solid var(--border);font-size:inherit}
-#hub-format[hidden]{display:none}
-#hub-format button,#hub-format-toggle{margin:0;padding:2px 7px;font:inherit;line-height:1.4;color:var(--link-color);background:none;border:0;border-radius:var(--radius);cursor:pointer}
-#hub-format-toggle{padding:0;font-size:inherit}
-#hub-format button:hover,#hub-format-toggle:hover,#hub-format-toggle[aria-expanded="true"]{color:var(--text-color);background:none}
-#hub-format button:focus-visible,#hub-format-toggle:focus-visible{outline:2px solid var(--link-color);outline-offset:1px}
-#hub-format .hub-b{font-weight:700}
-#hub-format .hub-i{font-style:italic}
-#hub-format .hub-sep{padding:0 4px;color:var(--muted);user-select:none}
+#bjorn-format{display:flex;flex-wrap:wrap;align-items:center;flex-basis:100%;gap:2px;margin:-3px 0 3px;padding:6px 0 4px;border-top:1px solid var(--border);font-size:inherit}
+#bjorn-format[hidden]{display:none}
+#bjorn-format button,#bjorn-format-toggle{margin:0;padding:2px 7px;font:inherit;line-height:1.4;color:var(--link-color);background:none;border:0;border-radius:var(--radius);cursor:pointer}
+#bjorn-format-toggle{padding:0;font-size:inherit}
+#bjorn-format button:hover,#bjorn-format-toggle:hover,#bjorn-format-toggle[aria-expanded="true"]{color:var(--text-color);background:none}
+#bjorn-format button:focus-visible,#bjorn-format-toggle:focus-visible{outline:2px solid var(--link-color);outline-offset:1px}
+#bjorn-format .bjorn-b{font-weight:700}
+#bjorn-format .bjorn-i{font-style:italic}
+#bjorn-format .bjorn-sep{padding:0 4px;color:var(--muted);user-select:none}
 `;
       document.head.append(style);
 
       /* The toolbar, just above Bear's bar */
       const BUTTONS = [
-        { label: 'B', name: 'Bold', key: 'B', cls: 'hub-b', run: () => wrap('**') },
-        { label: 'I', name: 'Italic', key: 'I', cls: 'hub-i', run: () => wrap('*') },
+        { label: 'B', name: 'Bold', key: 'B', cls: 'bjorn-b', run: () => wrap('**') },
+        { label: 'I', name: 'Italic', key: 'I', cls: 'bjorn-i', run: () => wrap('*') },
         { label: 'Link', name: 'Link', run: link },
         '|',
         { label: '"', name: 'Quote', run: () => lines('quote') },
@@ -1835,14 +1840,14 @@ header nav p {
       if (document.getElementById('gu-overlay')) BUTTONS.splice(-2);
 
       const toolbar = document.createElement('div');
-      toolbar.id = 'hub-format';
+      toolbar.id = 'bjorn-format';
       toolbar.setAttribute('role', 'group');
       toolbar.setAttribute('aria-label', 'Format');
 
       for (const def of BUTTONS) {
         if (def === '|') {
           const sep = document.createElement('span');
-          sep.className = 'hub-sep';
+          sep.className = 'bjorn-sep';
           sep.setAttribute('aria-hidden', 'true');
           sep.textContent = '|';
           toolbar.append(sep);
@@ -1880,9 +1885,9 @@ header nav p {
       /* The Format link beside "Markdown syntax", remembering open or closed */
       const toggle = document.createElement('button');
       toggle.type = 'button';
-      toggle.id = 'hub-format-toggle';
+      toggle.id = 'bjorn-format-toggle';
       toggle.textContent = 'Format';
-      toggle.setAttribute('aria-controls', 'hub-format');
+      toggle.setAttribute('aria-controls', 'bjorn-format');
 
       const setOpen = (open) => {
         toolbar.hidden = !open;
@@ -2102,48 +2107,48 @@ header nav p {
 
         const css = document.createElement('style');
         css.textContent = `
-#hub-gallery{width:min(640px,calc(100% - 40px));max-height:90vh;padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
-#hub-gallery::backdrop{background:rgb(0 0 0/.3)}
-@media (prefers-color-scheme:dark){#hub-gallery::backdrop{background:rgb(0 0 0/.5)}}
-#hub-gallery.is-dropping{outline:2px dashed var(--link-color);outline-offset:-8px}
-#hub-gallery .hg-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
-#hub-gallery .hg-head h2{margin:0;font-size:1em;color:var(--heading-color)}
-#hub-gallery .hg-body{padding:16px}
-#hub-gallery .hg-muted{display:block;margin:6px 0 0;font-size:small;color:var(--muted)}
-#hub-gallery .hg-muted[hidden]{display:none}
-#hub-gallery input[type="file"]{width:auto;padding:0;background:none;font:inherit}
-#hub-gallery .hg-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-#hub-gallery .hg-thumbs:empty{display:none}
-#hub-gallery.is-busy .hg-thumbs{pointer-events:none}
-#hub-gallery .hg-thumb{position:relative;width:96px;cursor:grab}
-#hub-gallery .hg-thumb img{display:block;width:96px;height:96px;object-fit:cover;border-radius:var(--radius);pointer-events:none}
-#hub-gallery .hg-thumb.is-target img{outline:2px solid var(--link-color);outline-offset:2px}
-#hub-gallery .hg-name{margin-top:3px;overflow:hidden;font-size:9px;white-space:nowrap;text-overflow:ellipsis;color:var(--muted)}
-#hub-gallery .hg-thumb.is-error .hg-name{white-space:normal;color:#e5484d}
-#hub-gallery .hg-caption{box-sizing:border-box;width:96px;margin:4px 0 0;padding:3px 5px;font-size:12px;line-height:1.3;color:inherit;background:none;border:1px solid var(--border);border-radius:var(--radius)}
-#hub-gallery .hg-remove{position:absolute;top:3px;left:3px;width:20px;height:20px;margin:0;padding:0;font-size:14px;line-height:20px;color:#fff;background:rgb(0 0 0/.6);border:0;border-radius:50%;opacity:0;cursor:pointer}
-#hub-gallery .hg-thumb:hover .hg-remove,#hub-gallery .hg-remove:focus-visible{opacity:1}
-#hub-gallery.is-busy .hg-remove{display:none}
-#hub-gallery .hg-badge{position:absolute;top:3px;right:3px;display:grid;place-items:center;width:18px;height:18px;font-size:11px;font-weight:700;color:#fff;border-radius:50%}
-#hub-gallery .hg-badge:empty{display:none}
-#hub-gallery .is-done .hg-badge{background:#30a46c}
-#hub-gallery .is-error .hg-badge{background:#e5484d}
-#hub-gallery .is-uploading{opacity:.4}
-#hub-gallery label.hg-option{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:.9em;font-weight:400;cursor:pointer}
-#hub-gallery label.hg-option input{width:auto;margin:0}
-#hub-gallery .hg-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:4px}
-#hub-gallery .hg-status{font-size:small;color:var(--muted)}
+#bjorn-gallery{width:min(640px,calc(100% - 40px));max-height:90vh;padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
+#bjorn-gallery::backdrop{background:rgb(0 0 0/.3)}
+@media (prefers-color-scheme:dark){#bjorn-gallery::backdrop{background:rgb(0 0 0/.5)}}
+#bjorn-gallery.is-dropping{outline:2px dashed var(--link-color);outline-offset:-8px}
+#bjorn-gallery .hg-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+#bjorn-gallery .hg-head h2{margin:0;font-size:1em;color:var(--heading-color)}
+#bjorn-gallery .hg-body{padding:16px}
+#bjorn-gallery .hg-muted{display:block;margin:6px 0 0;font-size:small;color:var(--muted)}
+#bjorn-gallery .hg-muted[hidden]{display:none}
+#bjorn-gallery input[type="file"]{width:auto;padding:0;background:none;font:inherit}
+#bjorn-gallery .hg-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#bjorn-gallery .hg-thumbs:empty{display:none}
+#bjorn-gallery.is-busy .hg-thumbs{pointer-events:none}
+#bjorn-gallery .hg-thumb{position:relative;width:96px;cursor:grab}
+#bjorn-gallery .hg-thumb img{display:block;width:96px;height:96px;object-fit:cover;border-radius:var(--radius);pointer-events:none}
+#bjorn-gallery .hg-thumb.is-target img{outline:2px solid var(--link-color);outline-offset:2px}
+#bjorn-gallery .hg-name{margin-top:3px;overflow:hidden;font-size:9px;white-space:nowrap;text-overflow:ellipsis;color:var(--muted)}
+#bjorn-gallery .hg-thumb.is-error .hg-name{white-space:normal;color:#e5484d}
+#bjorn-gallery .hg-caption{box-sizing:border-box;width:96px;margin:4px 0 0;padding:3px 5px;font-size:12px;line-height:1.3;color:inherit;background:none;border:1px solid var(--border);border-radius:var(--radius)}
+#bjorn-gallery .hg-remove{position:absolute;top:3px;left:3px;width:20px;height:20px;margin:0;padding:0;font-size:14px;line-height:20px;color:#fff;background:rgb(0 0 0/.6);border:0;border-radius:50%;opacity:0;cursor:pointer}
+#bjorn-gallery .hg-thumb:hover .hg-remove,#bjorn-gallery .hg-remove:focus-visible{opacity:1}
+#bjorn-gallery.is-busy .hg-remove{display:none}
+#bjorn-gallery .hg-badge{position:absolute;top:3px;right:3px;display:grid;place-items:center;width:18px;height:18px;font-size:11px;font-weight:700;color:#fff;border-radius:50%}
+#bjorn-gallery .hg-badge:empty{display:none}
+#bjorn-gallery .is-done .hg-badge{background:#30a46c}
+#bjorn-gallery .is-error .hg-badge{background:#e5484d}
+#bjorn-gallery .is-uploading{opacity:.4}
+#bjorn-gallery label.hg-option{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:.9em;font-weight:400;cursor:pointer}
+#bjorn-gallery label.hg-option input{width:auto;margin:0}
+#bjorn-gallery .hg-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:4px}
+#bjorn-gallery .hg-status{font-size:small;color:var(--muted)}
 `;
         document.head.append(css);
 
         const dialog = document.createElement('dialog');
-        dialog.id = 'hub-gallery';
-        dialog.setAttribute('aria-labelledby', 'hub-gallery-title');
+        dialog.id = 'bjorn-gallery';
+        dialog.setAttribute('aria-labelledby', 'bjorn-gallery-title');
         dialog.innerHTML = `
-<div class="hg-head"><h2 id="hub-gallery-title">Gallery</h2><button type="button" class="hg-close">Close</button></div>
+<div class="hg-head"><h2 id="bjorn-gallery-title">Gallery</h2><button type="button" class="hg-close">Close</button></div>
 <div class="hg-body">
-  <input type="file" multiple accept="image/*" aria-describedby="hub-gallery-limit">
-  <span class="hg-muted" id="hub-gallery-limit">Pick or drop photos, max 10 MB each</span>
+  <input type="file" multiple accept="image/*" aria-describedby="bjorn-gallery-limit">
+  <span class="hg-muted" id="bjorn-gallery-limit">Pick or drop photos, max 10 MB each</span>
   <span class="hg-muted hg-hint" hidden>Drag to reorder · Descriptions help screen readers</span>
   <div class="hg-thumbs"></div>
   <label class="hg-option"><input type="checkbox" class="hg-raw"> Keep original quality (skip Bear's optimisation)</label>
@@ -2482,7 +2487,7 @@ header nav p {
 
         function addButton() {
           const sep = document.createElement('span');
-          sep.className = 'hub-sep';
+          sep.className = 'bjorn-sep';
           sep.setAttribute('aria-hidden', 'true');
           sep.textContent = '|';
           const button = document.createElement('button');
@@ -2540,7 +2545,7 @@ header nav p {
   // Whether the Status switch is on, remembered in this browser so the nav
   // link shows without loading the Themes page on every dashboard page
   // One per blog, since blogs on the same account share the dashboard script
-  const STATUS_KEY = `hub-status:${dashboardBase}`;
+  const STATUS_KEY = `bjorn-status:${dashboardBase}`;
   function rememberStatus(on) {
     try { localStorage.setItem(STATUS_KEY, JSON.stringify({ on, checked: Date.now() })); } catch {}
   }
@@ -2552,36 +2557,36 @@ header nav p {
     // Last in Bear's first group, so Bear's own links keep their order
     const nav = document.querySelector('header nav');
     const anchor = nav?.querySelector('a[href$="/dashboard/email-list/"]') || nav?.querySelector('a[href$="/dashboard/styles/"]');
-    if (!dashboardBase || !anchor || document.getElementById('hub-status-link')) return;
+    if (!dashboardBase || !anchor || document.getElementById('bjorn-status-link')) return;
     const STYLES_URL = `${dashboardBase}styles/`;
 
     const css = document.createElement('style');
     css.textContent = `
-#hub-status{width:min(560px,calc(100% - 40px));padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
-#hub-status-link[hidden]{display:none}
-#hub-status::backdrop{background:rgb(0 0 0/.3)}
-@media (prefers-color-scheme:dark){#hub-status::backdrop{background:rgb(0 0 0/.5)}}
-#hub-status .hs-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
-#hub-status .hs-head h2{margin:0;font-size:1em;color:var(--heading-color)}
-#hub-status .hs-body{padding:16px}
-#hub-status .hs-row{display:flex;align-items:flex-start;gap:8px}
-#hub-status :is(input,textarea){box-sizing:border-box;font-family:inherit;line-height:1.4;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
-#hub-status .hs-emoji{flex:0 0 3.25rem;width:3.25rem;font-size:18px;text-align:center}
-#hub-status .hs-emoji::placeholder{opacity:.4}
-#hub-status .hs-emoji:focus::placeholder{opacity:0}
-#hub-status .hs-text{flex:1;min-width:0;min-height:calc(3lh + 18px);max-height:calc(6lh + 18px);resize:none;field-sizing:content}
-#hub-status .hs-meta{display:flex;justify-content:space-between;gap:1rem;margin-top:8px;font-size:small;color:var(--muted)}
-#hub-status .hs-hint{margin:0}
-#hub-status .hs-count{flex-shrink:0;font-variant-numeric:tabular-nums}
-#hub-status .hs-count.is-over{color:var(--error-color,#c0392b)}
-#hub-status .hs-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
-#hub-status .hs-actions button{margin:0}
-#hub-status .hs-say{font-size:small;color:var(--muted)}
-#hub-status.is-busy .hs-body{opacity:.6;pointer-events:none}`;
+#bjorn-status{width:min(560px,calc(100% - 40px));padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
+#bjorn-status-link[hidden]{display:none}
+#bjorn-status::backdrop{background:rgb(0 0 0/.3)}
+@media (prefers-color-scheme:dark){#bjorn-status::backdrop{background:rgb(0 0 0/.5)}}
+#bjorn-status .hs-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+#bjorn-status .hs-head h2{margin:0;font-size:1em;color:var(--heading-color)}
+#bjorn-status .hs-body{padding:16px}
+#bjorn-status .hs-row{display:flex;align-items:flex-start;gap:8px}
+#bjorn-status :is(input,textarea){box-sizing:border-box;font-family:inherit;line-height:1.4;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
+#bjorn-status .hs-emoji{flex:0 0 3.25rem;width:3.25rem;font-size:18px;text-align:center}
+#bjorn-status .hs-emoji::placeholder{opacity:.4}
+#bjorn-status .hs-emoji:focus::placeholder{opacity:0}
+#bjorn-status .hs-text{flex:1;min-width:0;min-height:calc(3lh + 18px);max-height:calc(6lh + 18px);resize:none;field-sizing:content}
+#bjorn-status .hs-meta{display:flex;justify-content:space-between;gap:1rem;margin-top:8px;font-size:small;color:var(--muted)}
+#bjorn-status .hs-hint{margin:0}
+#bjorn-status .hs-count{flex-shrink:0;font-variant-numeric:tabular-nums}
+#bjorn-status .hs-count.is-over{color:var(--error-color,#c0392b)}
+#bjorn-status .hs-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
+#bjorn-status .hs-actions button{margin:0}
+#bjorn-status .hs-say{font-size:small;color:var(--muted)}
+#bjorn-status.is-busy .hs-body{opacity:.6;pointer-events:none}`;
     document.head.append(css);
 
     const link = document.createElement('a');
-    link.id = 'hub-status-link';
+    link.id = 'bjorn-status-link';
     link.href = STYLES_URL;
     link.setAttribute('role', 'button');
     link.textContent = 'Status';
@@ -2602,10 +2607,10 @@ header nav p {
     }
 
     const dialog = document.createElement('dialog');
-    dialog.id = 'hub-status';
-    dialog.setAttribute('aria-labelledby', 'hub-status-title');
+    dialog.id = 'bjorn-status';
+    dialog.setAttribute('aria-labelledby', 'bjorn-status-title');
     dialog.innerHTML = `
-<div class="hs-head"><h2 id="hub-status-title">Status</h2><button type="button" class="hs-close">Close</button></div>
+<div class="hs-head"><h2 id="bjorn-status-title">Status</h2><button type="button" class="hs-close">Close</button></div>
 <form class="hs-body" method="dialog">
   <div class="hs-row">
     <input type="text" class="hs-emoji" aria-label="Emoji" placeholder="☕" autocomplete="off" spellcheck="false">
@@ -2693,7 +2698,7 @@ header nav p {
         page = await load();
         if (JSON.stringify(readState(page.css).status) !== JSON.stringify(next)) throw new Error('Not saved');
         // On the Themes page, the Björn tab and the CSS editor catch up
-        document.dispatchEvent(new CustomEvent('hub:status', { detail: { status: next, css: page.css } }));
+        document.dispatchEvent(new CustomEvent('bjorn:status', { detail: { status: next, css: page.css } }));
         clearButton.hidden = !next;
         say(next ? 'Posted ✓' : 'Cleared ✓');
         setTimeout(() => { if (dialog.open && !busy) dialog.close(); }, 900);

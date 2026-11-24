@@ -1,29 +1,34 @@
 /*
  Plugin name: Björn add-ons
  Description: Copy code, gallery lightbox, latest posts, post nav dates, status, blog archive, reply link, tags at the top and footer credit in one script. The switchable ones are turned on or off in the Björn tab under Themes.
- Version: 0.9.7
+ Version: 0.9.8
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   "use strict";
 
-  const VERSION = "0.9.7";
+  const VERSION = "0.9.8";
   // Where this copy was loaded from, read while it's still running
   const SELF = document.currentScript?.src || "";
+
+  // Settings from the theme. The old hub- names are read too, for blogs
+  // saved before the rename to bjorn- (can go after 1.0)
+  const prop = (css, name) =>
+    (css.getPropertyValue(`--bjorn-${name}`) || css.getPropertyValue(`--hub-${name}`)).trim();
 
   // Never write Bear's double-brace tags in this file, not even in a comment:
   // Bear fills them in wherever they appear in the footer, and breaks the script
 
   // Copy code, the lightbox and latest posts always run: they only act on code
   // blocks, #gallery photos and the latest posts list. The Björn tab writes the switchable ones into the
-  // theme CSS, e.g. --hub-addons: archive reply credit. Not set yet means archive on.
+  // theme CSS, e.g. --bjorn-addons: archive reply credit. Not set yet means archive on.
   const ALWAYS = [copyCode, galleryLightbox, latestPosts, postNavDates, ariaCurrent, upvotePop, statusCard];
   const SWITCHED = { archive: blogArchive, reply: replyLink, credit: footerCredit, "tags-top": tagsTop };
 
   function run() {
     const css = getComputedStyle(document.documentElement);
-    const list = css.getPropertyValue("--hub-addons").trim();
+    const list = prop(css, "addons");
     const on = (name) => (list ? list.split(/\s+/).includes(name) : name === "archive");
     const jobs = ALWAYS.map((start) => [start.name, start]);
     for (const [name, start] of Object.entries(SWITCHED)) if (on(name)) jobs.push([name, start]);
@@ -663,7 +668,7 @@
     if (!document.body.classList.contains("post") || !main || main.querySelector(".reply-link")) return;
 
     // An email address or a link to a contact page, set in the Björn tab
-    const to = css.getPropertyValue("--hub-reply").trim().replace(/^["']|["']$/g, "");
+    const to = prop(css, "reply").replace(/^["']|["']$/g, "");
     if (!to) return;
 
     const title = main.querySelector("h1")?.textContent.trim() || document.title;
@@ -722,10 +727,10 @@
   /* ---------- Footer credit: "Styled with Björn" above Bear's own line ---------- */
   function footerCredit() {
     const footer = document.querySelector("footer");
-    if (!footer || footer.querySelector(".hub-credit")) return;
+    if (!footer || footer.querySelector(".bjorn-credit, .hub-credit")) return;
 
     const credit = document.createElement("span");
-    credit.className = "hub-credit";
+    credit.className = "bjorn-credit hub-credit";
     credit.append("Styled with ");
     const link = document.createElement("a");
     link.href = "https://robertbirming.com/bjorn/";
@@ -741,24 +746,24 @@
   // Below whatever the footer directive holds, above the credits. Nothing set, nothing shown
   function statusCard(css) {
     const read = (name) => {
-      const v = css.getPropertyValue(name).trim();
+      const v = prop(css, name);
       return /^(["']).*\1$/.test(v) ? v.slice(1, -1) : v;
     };
-    const text = read("--hub-status-text");
-    const at = new Date(read("--hub-status-at"));
+    const text = read("status-text");
+    const at = new Date(read("status-at"));
     const footer = document.querySelector("footer");
-    if (!text || !footer || footer.querySelector(".hub-status")) return;
+    if (!text || !footer || footer.querySelector(".bjorn-status, .hub-status")) return;
 
     const card = document.createElement("aside");
-    card.className = "hub-status";
+    card.className = "bjorn-status hub-status";
     card.setAttribute("aria-label", "Status");
     const inner = document.createElement("div");
-    inner.className = "hub-status-card";
+    inner.className = "bjorn-status-card hub-status-card";
 
-    const emoji = read("--hub-status-emoji");
+    const emoji = read("status-emoji");
     if (emoji) {
       const span = document.createElement("span");
-      span.className = "hub-status-emoji";
+      span.className = "bjorn-status-emoji hub-status-emoji";
       span.setAttribute("aria-hidden", "true");
       span.textContent = emoji;
       inner.append(span);
