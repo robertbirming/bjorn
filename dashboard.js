@@ -1,14 +1,14 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.6
+ Version: 0.9.7
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   'use strict';
 
-  const VERSION = '0.9.6';
+  const VERSION = '0.9.7';
   // Where this copy was loaded from, read while it's still running
   const SELF = document.currentScript?.src || '';
 
@@ -178,7 +178,8 @@
   const REPO = 'robertbirming/bjorn';
   const CHANNEL = '0'; // 1 from launch
   const cdn = (version) => `https://cdn.jsdelivr.net/gh/${REPO}@${version}/`;
-  const HUB_SCRIPT = `${cdn(CHANNEL)}hub.js`;
+  // The footer line: a loader that never changes and loads the add-ons script matching the theme
+  const HUB_SCRIPT = `${cdn(CHANNEL)}bjorn.js`;
   const VERSION_RE = /\/\* Björn (\d+\.\d+\.\d+)/;
   const installedVersion = (css) => (css.match(VERSION_RE) || [])[1] || null;
   const newer = (a, b) => {
@@ -469,7 +470,7 @@
   // Checked at most every ten minutes
   async function latestRelease() {
     try {
-      const saved = JSON.parse(sessionStorage.getItem('hub-latest') || 'null');
+      const saved = JSON.parse(localStorage.getItem('hub-latest') || 'null');
       if (saved && Date.now() - saved.at < 600e3) return saved.version;
     } catch {}
     const valid = (v) => /^\d+\.\d+\.\d+$/.test(v || '') && v.split('.')[0] === CHANNEL;
@@ -484,7 +485,9 @@
       version = (await res.json()).version;
     }
     if (!valid(version)) throw new Error('No release yet');
-    try { sessionStorage.setItem('hub-latest', JSON.stringify({ version, at: Date.now() })); } catch {}
+    // A lagging fallback is never older than the script that's running
+    if (newer(VERSION, version)) version = VERSION;
+    try { localStorage.setItem('hub-latest', JSON.stringify({ version, at: Date.now() })); } catch {}
     return version;
   }
 
@@ -538,7 +541,8 @@
     const win = window.open(`${dashboardBase}styles/?stylesheet=bear-default&preview=true`, '_blank');
     if (!win) { window.open(fallback, '_blank'); return; }
     try {
-      const css = installCss('', await fetchRelease(await latestRelease()));
+      const rel = await fetchRelease(await latestRelease());
+      const css = installCss('', rel);
       const started = Date.now();
       const fill = () => {
         let doc;
@@ -551,7 +555,7 @@
         style.textContent = css;
         // The add-ons too, for the archive, copy code and the rest
         const script = doc.createElement('script');
-        script.src = HUB_SCRIPT;
+        script.src = `${cdn(rel.version)}hub.js`;
         doc.body.append(script);
       };
       fill();
@@ -564,7 +568,7 @@
   /* ---------- Footer directive: the lines the extras need ---------- */
   // Always the same three: the switches in the Björn tab decide what shows
   const FOOTER_LINES = [POST_NAV, LATEST, `<script src="${HUB_SCRIPT}"></` + 'script>'];
-  const FOOTER_FOUND = [/class="post-nav"/, /class="latest-posts"/, /bjorn@[^"']*\/hub\.js/];
+  const FOOTER_FOUND = [/class="post-nav"/, /class="latest-posts"/, /bjorn@[^"']*\/(hub|bjorn)\.js/];
   const missingLines = (text) => FOOTER_LINES.filter((line, i) => !FOOTER_FOUND[i].test(text));
 
   // Post nav and latest posts first, the script last, around what's already there
@@ -1362,7 +1366,7 @@ header nav p {
     <p>Fine-tune the look of your blog with your own CSS. Kept when you update Björn.</p>
     <textarea spellcheck="false" aria-label="Your CSS"></textarea>
   </details>
-  <p class="hub-credit">Björn by <a href="https://robertbirming.com/bjorn/" target="_blank" rel="noopener">Robert</a> · Enjoying it? <a href="https://ko-fi.com/birming" target="_blank" rel="noopener">Buy me a coffee</a></p>`;
+  <p class="hub-credit">Björn ${VERSION} by <a href="https://robertbirming.com/bjorn/" target="_blank" rel="noopener">Robert</a> · Enjoying it? <a href="https://ko-fi.com/birming" target="_blank" rel="noopener">Buy me a coffee</a></p>`;
 
     const $ = (s) => panel.querySelector(s);
     const fontsEl = $('.hub-fonts');

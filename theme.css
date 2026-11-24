@@ -1,6 +1,6 @@
 /* ===== Theme ===== */
-/* Björn 0.9.6 · github.com/robertbirming/bjorn
-   New: the Björn tab adds the footer lines for you.
+/* Björn 0.9.7 · github.com/robertbirming/bjorn
+   New: one line for both footer and dashboard, always the right version.
    Updated from the Björn tab under Themes. Changes made here are replaced. */
 
 /* Fonts: Latin */
@@ -55,7 +55,7 @@
   color-scheme: light dark;
 
   /* Which Björn this is, so the add-ons script can match it */
-  --bjorn-version: "0.9.6";
+  --bjorn-version: "0.9.7";
 
   /* Type */
   --font: "Schibsted Grotesk", "Schibsted Fallback", system-ui, sans-serif;
