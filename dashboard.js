@@ -1,7 +1,7 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.2
+ Version: 0.9.3
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
@@ -222,7 +222,10 @@
   const plain = (v) => clean(v).replace(/\*/g, '').slice(0, 80);
   // The first emoji (or character) typed, with skin tones and joins kept whole
   // Status text: one line, and no < or > so it can never close the style tag
-  const statusText = (v) => clean((v || '').replace(/"([^"\n]*)"/g, '\u201c$1\u201d').replace(/"/g, '\u201d')).replace(/[*<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  const statusText = (v) => clean((v || '').replace(/"([^"\n]*)"/g, '\u201c$1\u201d').replace(/"/g, '\u201d')).replace(/[*<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  // What readers see: a [text](link) counts as its text. 140 at most
+  const STATUS_MAX = 140;
+  const statusLength = (v) => v.replace(/\[([^\]]*)\]\(https?:\/\/[^\s)]+\)/g, '$1').trim().length;
   const isTime = (v) => typeof v === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?Z$/.test(v);
   const oneEmoji = (v) => {
     const t = plain(v);
@@ -2386,20 +2389,23 @@ header nav p {
 
     const css = document.createElement('style');
     css.textContent = `
-#hub-status{width:min(480px,calc(100% - 40px));padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
+#hub-status{width:min(560px,calc(100% - 40px));padding:0;color:var(--text-color);background:var(--background-color);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 32px rgb(0 0 0/.2)}
 #hub-status-link[hidden]{display:none}
 #hub-status::backdrop{background:rgb(0 0 0/.3)}
 @media (prefers-color-scheme:dark){#hub-status::backdrop{background:rgb(0 0 0/.5)}}
 #hub-status .hs-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 #hub-status .hs-head h2{margin:0;font-size:1em;color:var(--heading-color)}
 #hub-status .hs-body{padding:16px}
-#hub-status .hs-row{display:flex;gap:8px}
-#hub-status input{box-sizing:border-box;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
+#hub-status .hs-row{display:flex;align-items:flex-start;gap:8px}
+#hub-status :is(input,textarea){box-sizing:border-box;font-family:inherit;line-height:1.4;margin:0;padding:8px 10px;font-size:15px;border:1px solid var(--border);border-radius:3px}
 #hub-status .hs-emoji{flex:0 0 3.25rem;width:3.25rem;font-size:18px;text-align:center}
 #hub-status .hs-emoji::placeholder{opacity:.4}
 #hub-status .hs-emoji:focus::placeholder{opacity:0}
-#hub-status .hs-text{flex:1;min-width:0}
-#hub-status .hs-hint{margin:8px 0 0;font-size:small;color:var(--muted)}
+#hub-status .hs-text{flex:1;min-width:0;min-height:calc(3lh + 18px);max-height:calc(6lh + 18px);resize:none;field-sizing:content}
+#hub-status .hs-meta{display:flex;justify-content:space-between;gap:1rem;margin-top:8px;font-size:small;color:var(--muted)}
+#hub-status .hs-hint{margin:0}
+#hub-status .hs-count{flex-shrink:0;font-variant-numeric:tabular-nums}
+#hub-status .hs-count.is-over{color:var(--error-color,#c0392b)}
 #hub-status .hs-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
 #hub-status .hs-actions button{margin:0}
 #hub-status .hs-say{font-size:small;color:var(--muted)}
@@ -2435,9 +2441,9 @@ header nav p {
 <form class="hs-body" method="dialog">
   <div class="hs-row">
     <input type="text" class="hs-emoji" aria-label="Emoji" placeholder="☕" autocomplete="off" spellcheck="false">
-    <input type="text" class="hs-text" aria-label="Status" placeholder="What are you up to?" maxlength="140" autocomplete="off">
+    <textarea class="hs-text" aria-label="Status" placeholder="What are you up to?" maxlength="600" rows="3" autocomplete="off"></textarea>
   </div>
-  <p class="hs-hint">Shows in your blog's footer, with how long ago you posted it. A new status replaces the old one.</p>
+  <div class="hs-meta"><p class="hs-hint">Shows in your footer, with how long ago you posted it.</p><span class="hs-count" aria-live="polite"></span></div>
   <div class="hs-actions"><button type="submit" class="hs-post">Post status</button><button type="button" class="link-button hs-clear" hidden>Clear status</button><span class="hs-say" aria-live="polite"></span></div>
 </form>`;
     document.body.append(dialog);
@@ -2472,6 +2478,7 @@ header nav p {
       if (busy) return;
       emojiInput.value = '';
       textInput.value = '';
+      count();
       clearButton.hidden = true;
       say('Loading…');
       dialog.showModal();
@@ -2487,6 +2494,7 @@ header nav p {
         if (current) {
           emojiInput.value = current.emoji;
           textInput.value = current.text;
+          count();
           clearButton.hidden = false;
         }
         say('');
@@ -2535,10 +2543,38 @@ header nav p {
     dialog.addEventListener('click', (e) => { if (e.target === dialog && !busy) dialog.close(); });
     dialog.addEventListener('close', () => link.focus());
 
+    // Characters readers will see, out of 140
+    const countEl = $('.hs-count');
+    function count() {
+      const n = statusLength(textInput.value);
+      countEl.textContent = `${n}/${STATUS_MAX}`;
+      countEl.classList.toggle('is-over', n > STATUS_MAX);
+    }
+    textInput.addEventListener('input', count);
+
+    // One line: Enter posts, like a single field
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) {
+        e.preventDefault();
+        $('.hs-body').requestSubmit();
+      }
+    });
+
+    // Paste a link over selected text and it becomes [text](link), as in Bear's editor
+    textInput.addEventListener('paste', (e) => {
+      const url = (e.clipboardData?.getData('text/plain') || '').trim();
+      const { selectionStart: a, selectionEnd: b, value } = textInput;
+      if (a === b || !/^https?:\/\/\S+$/.test(url)) return;
+      e.preventDefault();
+      textInput.setRangeText(`[${value.slice(a, b).replace(/[[\]]/g, '')}](${url})`, a, b, 'end');
+      count();
+    });
+
     $('.hs-body').addEventListener('submit', (e) => {
       e.preventDefault();
       const text = statusText(textInput.value);
       if (!text) { say('Write a status first.'); textInput.focus(); return; }
+      if (statusLength(text) > STATUS_MAX) { say(`Keep it to ${STATUS_MAX} characters.`); textInput.focus(); return; }
       save({ emoji: oneEmoji(emojiInput.value), text, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
     });
     clearButton.addEventListener('click', () => save(null));
