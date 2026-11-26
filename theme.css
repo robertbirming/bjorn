@@ -1,6 +1,6 @@
 /* ===== Theme ===== */
-/* Björn 0.9.8 · github.com/robertbirming/bjorn
-   New: everything is called Björn now, inside and out.
+/* Björn 0.9.9 · github.com/robertbirming/bjorn
+   New: mono dates only for Bear's and Björn's own dates.
    Updated from the Björn tab under Themes. Changes made here are replaced. */
 
 /* Fonts: Latin */
@@ -55,7 +55,7 @@
   color-scheme: light dark;
 
   /* Which Björn this is, so the add-ons script can match it */
-  --bjorn-version: "0.9.8";
+  --bjorn-version: "0.9.9";
 
   /* Type */
   --font: "Schibsted Grotesk", "Schibsted Fallback", system-ui, sans-serif;
@@ -701,8 +701,10 @@ main > p:empty:first-child + * {
   margin-block-start: 0.5em;
 }
 
-/* Dates in mono, a nod to Bear's default theme */
-time {
+/* Dates in mono, a nod to Bear's default theme. Only Bear's own dates
+   (wrapped in <i>) and Björn's, so a <time> in your own pages or widgets
+   keeps the look around it */
+:is(i > time, .post-nav time, .bjorn-status time) {
   font-family: var(--mono);
   font-size: var(--small);
   color: var(--muted);
