@@ -1,14 +1,14 @@
 /*
  Plugin name: Björn dashboard
  Description: A Björn tab under Themes, Status in the dashboard nav, and Format in the post editor: a small Markdown toolbar with Gallery for uploading several photos at once, and Meta image for share images. One line in your dashboard plugins.
- Version: 0.9.8
+ Version: 0.9.9
  Author: Robert Birming
  Author URI: https://robertbirming.com
 */
 (() => {
   'use strict';
 
-  const VERSION = '0.9.8';
+  const VERSION = '0.9.9';
   // Where this copy was loaded from, read while it's still running
   const SELF = document.currentScript?.src || '';
 
